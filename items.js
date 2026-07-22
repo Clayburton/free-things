@@ -5,7 +5,10 @@
 
      art    square image, any style (drawing, plugin screenshot, photo).
             Put it in assets/art/. 860x860 or larger, jpg or png.
-     page   its own page on the site. Clicking the picture goes here.
+     page   OPTIONAL. If present, clicking the picture opens that page.
+            Leave it out and the picture becomes the play button instead —
+            this page is the main page for the instruments, so only DEM-Osc
+            (which needs the free checkout) sends anyone away.
      audio  optional. assets/audio/<something>.mp3 — 8-20 seconds, loops.
             Leave it out and that thing simply has no sound yet.
      story  one or two sentences. This is the charm — say where it came from.
@@ -52,7 +55,6 @@ const ITEMS = [
     title: 'gr808 kick',
     kind: 'kontakt instrument',
     art: 'assets/art/gr808.jpg',
-    page: 'https://clayandkelsy.com/gr808-kick/',
     tint: '#fef4ea',
     audio: 'assets/audio/gr808.mp3',
     story: 'Our version of the beloved 808 kick — our most used sample, run through the Voice of God. Mix the mid and sides independently: a kick drum bass down low, a beautiful pad up high.',
@@ -66,8 +68,7 @@ const ITEMS = [
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/gr808_CK.zip', size: '74 MB' },
     links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/gr808-kick/' },
-      { label: 'the full story', href: 'https://clayandkelsy.com/gr808-kick/' }
+      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/gr808-kick/' }
     ]
   },
 
@@ -76,7 +77,6 @@ const ITEMS = [
     title: 'aGong',
     kind: 'kontakt instrument',
     art: 'assets/art/agong.jpg',
-    page: 'https://clayandkelsy.com/agong/',
     tint: '#fef0fd',
     audio: 'assets/audio/agong.mp3',
     story: 'A little gong Clay bought from a market in Den Haag. The first thing we ever made for Kontakt — it goes from a peaceful meditation gong to a hammered EP.',
@@ -90,8 +90,7 @@ const ITEMS = [
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/aGong_CK.zip', size: '26 MB' },
     links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/agong/' },
-      { label: 'the full story', href: 'https://clayandkelsy.com/agong/' }
+      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/agong/' }
     ]
   },
 
@@ -100,7 +99,6 @@ const ITEMS = [
     title: 'Diddley ebow',
     kind: 'kontakt instrument',
     art: 'assets/art/diddley-ebow.jpg',
-    page: 'https://clayandkelsy.com/diddley-bow/',
     tint: '#f3fff5',
     audio: 'assets/audio/diddley-ebow.mp3',
     story: 'A one-string cigar box guitar built by Tom Burton at Chatsworth Guitars in Los Angeles, played with an Ebow and a DARK MATTER slide. It comes out a moody chorus pad with notes of acoustic slide guitar.',
@@ -114,8 +112,7 @@ const ITEMS = [
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley_ebow_CK.zip', size: '100 MB' },
     links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/diddley-ebow/' },
-      { label: 'the full story', href: 'https://clayandkelsy.com/diddley-bow/' }
+      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/diddley-ebow/' }
     ]
   },
 
@@ -124,7 +121,6 @@ const ITEMS = [
     title: 'Diddley plucks',
     kind: 'kontakt instrument',
     art: 'assets/art/diddley-plucks.jpg',
-    page: 'https://clayandkelsy.com/diddley-plucks/',
     tint: '#eff3ff',
     audio: 'assets/audio/diddley-plucks.mp3',
     story: 'The same cigar box guitar, this time plucked with the slide. Cute and folky — the friendlier sibling of the ebow.',
@@ -138,8 +134,7 @@ const ITEMS = [
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley_plucks_CK.zip', size: '225 MB' },
     links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/diddley-plucks/' },
-      { label: 'the full story', href: 'https://clayandkelsy.com/diddley-plucks/' }
+      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/diddley-plucks/' }
     ]
   },
 
@@ -148,7 +143,6 @@ const ITEMS = [
     title: 'Wrenches',
     kind: 'kontakt instrument',
     art: 'assets/art/wrenches.jpg',
-    page: 'https://clayandkelsy.com/wrenches/',
     tint: '#ffeae9',
     audio: 'assets/audio/wrenches.mp3',
     story: 'We picked these up in the garage and they rang out — eerie, dissonant, somewhere near church bells. Two mallets made the cut: rubber and copper. Made with love.',
@@ -164,8 +158,7 @@ const ITEMS = [
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/09/Wrenches_CK.zip', size: '342 MB' },
     links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/wrenches/' },
-      { label: 'the full story', href: 'https://clayandkelsy.com/wrenches/' }
+      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/wrenches/' }
     ]
   },
 

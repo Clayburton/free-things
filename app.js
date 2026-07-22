@@ -186,15 +186,21 @@ function thingCard(it, i) {
   const dl   = take.kind === 'download';
   const meta = dl ? (take.size ? '· ' + take.size : '· free') : '· free';
 
-  // the picture is a door to that thing's own page; the play chip rides on top
-  // of it as a sibling (a button inside an anchor would be invalid)
-  const page = it.page || (it.links || []).map(l => l.href)[0] || (take.href || '#');
+  // This page is the main page for the instruments, so the picture only leads
+  // away when the item actually has somewhere to go (DEM-Osc's free checkout).
+  // Otherwise the picture IS the play control — a big, obvious target.
+  // Either way the chip rides on top as a sibling; a button inside an anchor
+  // would be invalid HTML.
+  const objTag = it.page
+    ? `<a class="obj" href="${esc(it.page)}" target="_top" aria-label="${esc(it.title)} — read more">`
+    : it.audio
+      ? `<button class="obj" type="button" disabled aria-label="Hear ${esc(it.title)}">`
+      : `<div class="obj">`;
+  const objEnd = it.page ? '</a>' : it.audio ? '</button>' : '</div>';
 
   a.innerHTML = `
     <div class="objwrap">
-      <a class="obj" href="${esc(page)}" target="_top" aria-label="${esc(it.title)} — read more">
-        <img alt="" decoding="async">
-      </a>
+      ${objTag}<img alt="" decoding="async">${objEnd}
       <button class="hear" type="button" hidden aria-label="Hear ${esc(it.title)}">
         <svg viewBox="0 0 16 18" aria-hidden="true"><path d="M1.2 1.1 15 9 1.2 16.9Z"/></svg>
         <span class="hl">hear it</span>
@@ -222,11 +228,13 @@ function thingCard(it, i) {
   img.onerror = () => postHeight();
   img.src = it.art;
 
-  hear.addEventListener('click', e => {
+  const toggle = e => {
     e.preventDefault(); e.stopPropagation();
     if (it._ok !== true) return;
     if (A.curId === it.id) stop(); else play(it);
-  });
+  };
+  hear.addEventListener('click', toggle);
+  if (!it.page && it.audio) obj.addEventListener('click', toggle);
 
   cards.set(it.id, { item: it, root: a, wave: $('.wave', a), hear, obj });
   return a;
@@ -236,8 +244,10 @@ function thingCard(it, i) {
 function paintHear(item) {
   const c = cards.get(item.id);
   if (!c) return;
-  // the picture always goes to its page; only the play chip depends on a clip
-  c.hear.hidden = item._ok !== true;
+  const has = item._ok === true;
+  c.hear.hidden = !has;
+  // when the picture is the play control, it stays inert until a clip is confirmed
+  if (c.obj.tagName === 'BUTTON') c.obj.disabled = !has;
   el('soundBtn').hidden = !(window.ITEMS || []).some(i => i._ok === true);
   sizeWave(c);
 }

@@ -131,6 +131,8 @@ body{
   border:0;padding:0;overflow:hidden;
 }
 .obj:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+/* a picture with nothing behind it yet shouldn't pretend to be clickable */
+.obj:disabled,div.obj{cursor:default}
 .obj img{
   width:100%;height:100%;object-fit:cover;display:block;
   opacity:0;transition:opacity .5s ease;

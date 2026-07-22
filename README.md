@@ -21,7 +21,7 @@ Open `items.js` and add one object. Nothing else in the project changes.
   id:    'collide-trial',
   title: 'COLLIDE trial',
   art:   'assets/art/collide.jpg',       // any square image
-  page:  'https://clayandkelsy.com/collide-trial/',   // clicking the picture goes here
+  page:  'https://clayandkelsy.com/collide-trial/',   // optional — see below
   tint:  '#e8e2ee',                      // its background colour
   audio: 'assets/audio/collide.mp3',     // optional
   story: 'A sentence or two. Say where it came from — that\'s the charm.',
@@ -44,6 +44,12 @@ so wildly different pictures still read as one set. There is no style to match.
   button. This is what the Kontakt instruments use.
 - `'page'` — sends them to a page instead. Use this for anything that goes
   through the free checkout, like the plugins.
+
+**`page` is optional, and usually you don't want it.** This page *is* the main
+page for the instruments — the old per-instrument pages said less than these
+cards do, so nothing links out to them any more. Only DEM-Osc has a `page`,
+because getting it genuinely requires the free checkout. With no `page`, the
+picture becomes the play button instead: a big, obvious target.
 
 When there are enough plugin trials to be worth grouping, uncomment the
 `{ divider: 'plugins' }` line in `items.js` and they get their own heading.
