@@ -14,6 +14,9 @@ const el = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// tie the last word on so a wrap can't strand it — keeps "Kontakt 6+" together
+const bindLast = s => s.replace(/ ([^ ]+)$/, '&nbsp;$1');
+
 // ------------------------------------------------------------------ audio --
 const A = {
   ctx: null, master: null, analyser: null,
@@ -183,19 +186,26 @@ function thingCard(it, i) {
   const dl   = take.kind === 'download';
   const meta = dl ? (take.size ? '· ' + take.size : '· free') : '· free';
 
+  // the picture is a door to that thing's own page; the play chip rides on top
+  // of it as a sibling (a button inside an anchor would be invalid)
+  const page = it.page || (it.links || []).map(l => l.href)[0] || (take.href || '#');
+
   a.innerHTML = `
-    <button class="obj" type="button" aria-label="Hear ${esc(it.title)}">
-      <img alt="" decoding="async">
-      <span class="hear" role="presentation" hidden>
+    <div class="objwrap">
+      <a class="obj" href="${esc(page)}" target="_top" aria-label="${esc(it.title)} — read more">
+        <img alt="" decoding="async">
+      </a>
+      <button class="hear" type="button" hidden aria-label="Hear ${esc(it.title)}">
         <svg viewBox="0 0 16 18" aria-hidden="true"><path d="M1.2 1.1 15 9 1.2 16.9Z"/></svg>
         <span class="hl">hear it</span>
-      </span>
-    </button>
+      </button>
+    </div>
     <div class="meta">
       <h2 class="name">${esc(it.title)}</h2>
       <canvas class="wave" aria-hidden="true"></canvas>
       <p class="story">${esc(it.story)}</p>
-      <p class="specs">${(it.specs || []).map(s => `<span>${esc(s)}</span>`).join('<i>·</i>')}</p>
+      <p class="specs">${(it.specs || []).map(s =>
+        `<span${s.length < 20 ? ' class="nb"' : ''}>${bindLast(esc(s))}</span>`).join('<i>·</i>')}</p>
       <p class="do">
         <a class="take" href="${esc(take.href || '#')}"${dl ? ' download' : ' target="_top"'}>
           ${esc(take.label || 'take it')} <em>${meta}</em></a>
@@ -212,7 +222,8 @@ function thingCard(it, i) {
   img.onerror = () => postHeight();
   img.src = it.art;
 
-  obj.addEventListener('click', () => {
+  hear.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
     if (it._ok !== true) return;
     if (A.curId === it.id) stop(); else play(it);
   });
@@ -225,13 +236,8 @@ function thingCard(it, i) {
 function paintHear(item) {
   const c = cards.get(item.id);
   if (!c) return;
-  const has = item._ok === true;
-  c.hear.hidden = !has;
-  // with no clip the tile does nothing — say so properly rather than leaving a
-  // focusable button that lies about what it does
-  c.obj.disabled = !has;
-  c.obj.style.cursor = has ? 'pointer' : 'default';
-  if (!has) c.obj.removeAttribute('aria-label');
+  // the picture always goes to its page; only the play chip depends on a clip
+  c.hear.hidden = item._ok !== true;
   el('soundBtn').hidden = !(window.ITEMS || []).some(i => i._ok === true);
   sizeWave(c);
 }

@@ -21,6 +21,7 @@ Open `items.js` and add one object. Nothing else in the project changes.
   id:    'collide-trial',
   title: 'COLLIDE trial',
   art:   'assets/art/collide.jpg',       // any square image
+  page:  'https://clayandkelsy.com/collide-trial/',   // clicking the picture goes here
   tint:  '#e8e2ee',                      // its background colour
   audio: 'assets/audio/collide.mp3',     // optional
   story: 'A sentence or two. Say where it came from — that\'s the charm.',
@@ -30,8 +31,8 @@ Open `items.js` and add one object. Nothing else in the project changes.
 }
 ```
 
-Put it **before** `{ divider:'more soon', end:true }` so the empty place
-setting stays last.
+**The order on the page is the order in this list.** Put a new thing **before**
+`{ divider:'more soon', end:true }` so the empty place setting stays last.
 
 **The artwork can be anything** — a drawing, a screenshot of the plugin, a
 photo. Square, 860 px or larger, jpg or png. The table gives every image the

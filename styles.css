@@ -111,13 +111,18 @@ body{
 .meta{display:flex;flex-direction:column;flex:1}
 .do{margin-top:auto}
 
-/* the object sitting on the table */
+/* the object sitting on the table. the wrapper carries the tilt and the lift so
+   the play chip travels with the picture; the picture itself is the door */
+.objwrap{
+  position:relative;width:100%;
+  transform:rotate(var(--rot,0deg)) translateY(0);
+  transition:transform .34s cubic-bezier(.22,.9,.3,1);
+}
 .obj{
   position:relative;display:block;width:100%;aspect-ratio:1/1;
   border-radius:3px;
   background:var(--tint,#ece5da);
-  transform:rotate(var(--rot,0deg)) translateY(0);
-  transition:transform .34s cubic-bezier(.22,.9,.3,1), box-shadow .34s cubic-bezier(.22,.9,.3,1);
+  transition:box-shadow .34s cubic-bezier(.22,.9,.3,1);
   box-shadow:
     0 1px 1px rgba(74,58,44,.13),
     0 6px 12px -4px rgba(74,58,44,.16),
@@ -125,6 +130,7 @@ body{
   cursor:pointer;-webkit-tap-highlight-color:transparent;
   border:0;padding:0;overflow:hidden;
 }
+.obj:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
 .obj img{
   width:100%;height:100%;object-fit:cover;display:block;
   opacity:0;transition:opacity .5s ease;
@@ -139,9 +145,10 @@ body{
   box-shadow:inset 0 0 0 1px rgba(74,58,44,.10);
 }
 
+.thing:hover .objwrap,
+.thing:focus-within .objwrap{ transform:rotate(var(--rot,0deg)) translateY(-7px); }
 .thing:hover .obj,
 .thing:focus-within .obj{
-  transform:rotate(var(--rot,0deg)) translateY(-7px);
   box-shadow:
     0 1px 1px rgba(74,58,44,.12),
     0 12px 20px -6px rgba(74,58,44,.17),
@@ -194,8 +201,8 @@ body{
   margin:.85em 0 0;font-size:clamp(9.5px,.95vw,11px);letter-spacing:.13em;
   color:var(--faint);line-height:1.65;
 }
-/* break between specs, never inside one — "59.8 MB installed" stays together */
-.specs span{white-space:nowrap}
+/* short specs stay whole ("59.8 MB installed"); long ones are allowed to wrap */
+.specs span.nb{white-space:nowrap}
 .specs i{font-style:normal;padding:0 .62em}
 
 .do{display:flex;flex-wrap:wrap;align-items:center;gap:.55em 1.15em;padding-top:1.15em}
@@ -243,6 +250,8 @@ body{
   color:#8d8494;max-width:64ch;
 }
 .f-note strong{color:var(--muted);font-weight:400}
+.f-note a{color:var(--muted);text-decoration:none;transition:color .2s ease}
+.f-note a:hover{color:var(--pink-deep)}
 .f-brand{margin:0;font-size:clamp(9.5px,.95vw,11px);letter-spacing:.2em;color:var(--faint)}
 
 /* ---------------------------------------------------------------- narrow */
