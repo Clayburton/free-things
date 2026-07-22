@@ -233,10 +233,20 @@ body{
   border:1px dashed rgba(122,105,120,.55);
   background:rgba(255,253,249,.34);
   display:flex;align-items:center;justify-content:center;
+  padding:14px;text-decoration:none;
+  transition:border-color .22s ease,background .22s ease;
 }
 .thing--soon .slot span{
-  font-size:clamp(10px,1.05vw,12px);letter-spacing:.22em;color:#8e849a;
+  font-size:clamp(10px,1.05vw,12px);letter-spacing:.20em;line-height:1.9;
+  color:#8e849a;text-align:center;transition:color .22s ease;
 }
+/* non-breaking spaces, or the closing bracket wraps onto a line by itself */
+a.slot span::before{content:"[\00a0";}
+a.slot span::after{content:"\00a0]";}
+a.slot span{text-wrap:balance}
+a.slot:hover{border-color:var(--pink);border-style:solid;background:rgba(255,255,255,.72)}
+a.slot:hover span{color:var(--pink-deep)}
+a.slot:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
 .thing--soon .story{color:var(--muted)}
 
 /* ---------------------------------------------------------------- footer */
@@ -249,7 +259,7 @@ body{
 }
 .f-note{
   margin:0;font-size:clamp(9.5px,.95vw,11px);letter-spacing:.1em;line-height:1.7;
-  color:#8d8494;max-width:64ch;
+  color:#8d8494;white-space:nowrap;      /* question and link stay on one line */
 }
 .f-note strong{color:var(--muted);font-weight:400}
 .f-note a{color:var(--muted);text-decoration:none;transition:color .2s ease}
@@ -272,8 +282,11 @@ body{
   .do{padding-top:.85em;gap:.5em .9em}
   .take{padding:.55em .9em;font-size:11.5px}
   .hear{left:7px;bottom:7px;padding:6px 9px;font-size:9.5px}
-  .thing--soon .slot{width:116px}
+  .thing--soon .slot{width:116px;padding:8px}
+  .thing--soon .slot span{letter-spacing:.14em;line-height:1.7}
   .wave{height:13px}
+  /* one line won't fit a phone — better to wrap than to clip the link off */
+  .f-note{white-space:normal}
 }
 
 @media (prefers-reduced-motion:reduce){

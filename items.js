@@ -20,8 +20,8 @@
             needs the free checkout, like the plugins).
 
    A { divider:'name' } entry starts a new section on the table.
-   Keep { divider:'more soon', end:true } last — it draws the empty place
-   setting where the next thing will go.
+   Keep the { end:true } entry last — it draws the empty place setting at the
+   end of the table, which is the newsletter sign-up.
 
    Order on the page = order in this list.
    ========================================================================== */
@@ -164,12 +164,19 @@ const ITEMS = [
     ]
   },
 
-  { divider: 'more soon', end: true }
+  /* The empty place setting at the end of the table. It's the newsletter
+     sign-up — change `label` and `note` as things get closer. */
+  {
+    divider: 'more soon',
+    end: true,
+    label: 'sign up for new free goodies',
+    href: 'https://clayandkelsy.com/#mailpoet_form_1'
+  }
 
 ];
 
-/* The line under the empty place setting. Change it as things get closer. */
-const END_NOTE = 'Free trials of the new plugins are on their way here. Nothing to sign up for — just come back.';
+/* The line under the empty place setting. */
+const END_NOTE = 'More instruments and free trials of the new plugins are on the way. We’ll tell you first.';
 
 window.ITEMS = ITEMS;
 window.END_NOTE = END_NOTE;

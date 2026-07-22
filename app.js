@@ -134,11 +134,15 @@ function build() {
   table.appendChild(frag);
 }
 
+// the empty place setting at the end of the table — the newsletter sign-up
 function soonCard(it) {
   const a = document.createElement('article');
   a.className = 'thing thing--soon';
-  a.innerHTML =
-    `<div class="slot"><span>${esc(it.divider)}</span></div>
+  const label = esc(it.label || it.divider || 'more soon');
+  const slot = it.href
+    ? `<a class="slot" href="${esc(it.href)}" target="_top" rel="noopener"><span>${label}</span></a>`
+    : `<div class="slot"><span>${label}</span></div>`;
+  a.innerHTML = `${slot}
      <div class="meta"><p class="story">${esc(window.END_NOTE || '')}</p></div>`;
   return a;
 }
