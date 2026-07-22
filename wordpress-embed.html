@@ -1,0 +1,53 @@
+<!-- ==========================================================================
+     FREE THINGS — paste this whole thing into a Custom HTML block
+     on https://clayandkelsy.com/freethings/  (page-id 658)
+
+     Delete the old six-tile image grid first — this replaces it.
+     The iframe grows itself to fit, so it never scrolls inside and never
+     leaves a gap underneath.
+     ========================================================================== */ -->
+
+<style>
+#ck-free{
+  position:relative;
+  width:100vw;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+  background:#f4eee4;
+  overflow:hidden;
+}
+#ck-free iframe{
+  display:block;
+  width:100%;
+  height:1400px;          /* replaced by the real height as soon as it reports */
+  border:0;
+  transition:height .18s ease;
+}
+</style>
+
+<div id="ck-free">
+  <iframe
+    src="https://clayburton.github.io/free-things/"
+    title="Free Things — instruments we made and gave away"
+    scrolling="no"
+    allow="autoplay"
+    loading="eager"></iframe>
+</div>
+
+<script>
+(function(){
+  var wrap = document.getElementById('ck-free');
+  if (!wrap || wrap.dataset.wired) return;
+  wrap.dataset.wired = '1';
+  var frame = wrap.querySelector('iframe');
+
+  window.addEventListener('message', function(e){
+    if (e.origin !== 'https://clayburton.github.io') return;
+    var d = e.data;
+    if (!d || d.ckFree !== 'height') return;
+    var h = parseInt(d.h, 10);
+    if (!(h > 200 && h < 20000)) return;
+    frame.style.height = h + 'px';
+  }, false);
+})();
+</script>

@@ -1,0 +1,272 @@
+/* ==========================================================================
+   FREE THINGS — the table
+   Objects laid out on a lit surface. Everything visible, nothing to dig.
+
+   No vh/dvh/svh anywhere: the embed grows the iframe to this page's own
+   height, and mixing the two is how you get a resize loop.
+   ========================================================================== */
+
+:root{
+  --paper:#f4eee4;
+  --ink:#2b2333;
+  --muted:#6f6479;
+  --faint:#9a91a1;
+  --pink:#cc5f97;
+  --pink-deep:#b34a82;
+  --rule:rgba(43,35,51,.15);
+
+  --pad: clamp(20px, 4vw, 56px);
+  --mono:"Courier Prime", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --serif:"EB Garamond", Georgia, "Times New Roman", serif;
+}
+
+*{box-sizing:border-box}
+/* author display rules beat the UA's [hidden] rule — say it once, loudly */
+[hidden]{display:none !important}
+
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  color:var(--ink);
+  font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+
+  /* the surface: light falling from the upper left, warm shade at the far
+     corner, and a fine tooth over the whole thing */
+  background-color:var(--paper);
+  background-image:
+    radial-gradient(120% 90% at 14% 4%, rgba(255,252,246,.95) 0%, rgba(255,252,246,0) 62%),
+    radial-gradient(130% 110% at 92% 104%, rgba(176,160,140,.30) 0%, rgba(176,160,140,0) 58%),
+    linear-gradient(163deg, #f8f3ea 0%, #f1e9dd 52%, #e9dfd1 100%);
+  background-attachment:scroll;
+}
+
+/* a very fine grain so the surface isn't a flat digital wash */
+#page::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  opacity:.30;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
+}
+
+#page{position:relative;z-index:1;padding:0 var(--pad) clamp(28px,4vw,54px)}
+
+/* ------------------------------------------------------------------ head */
+#mast{
+  display:flex;align-items:flex-start;gap:2em;
+  padding:clamp(30px,5vw,62px) 0 clamp(24px,3.4vw,40px);
+  max-width:1320px;margin:0 auto;
+}
+.mast-in{max-width:47ch}
+.kick{
+  margin:0;font-size:clamp(11px,1.15vw,13px);letter-spacing:.22em;
+  color:var(--pink-deep);
+}
+.lede{
+  margin:.85em 0 0;font-family:var(--serif);
+  font-size:clamp(16px,1.75vw,22px);line-height:1.45;color:#4a4152;
+}
+
+.sound{
+  margin-left:auto;flex:none;
+  display:flex;align-items:center;gap:.62em;
+  background:none;border:0;padding:8px 2px;cursor:pointer;
+  font-family:var(--mono);font-size:clamp(10px,1.05vw,12px);
+  letter-spacing:.16em;color:var(--muted);
+  -webkit-tap-highlight-color:transparent;
+}
+.sound:hover{color:var(--pink-deep)}
+.sound .eq{display:flex;align-items:flex-end;gap:2px;height:11px}
+.sound .eq i{width:2px;height:3px;background:currentColor;display:block;transition:height .18s ease}
+.sound[aria-pressed="true"]{color:var(--pink-deep)}
+.sound[aria-pressed="true"] .eq i:nth-child(1){animation:eq 1.05s -.2s infinite ease-in-out}
+.sound[aria-pressed="true"] .eq i:nth-child(2){animation:eq .82s -.5s infinite ease-in-out}
+.sound[aria-pressed="true"] .eq i:nth-child(3){animation:eq 1.24s   0s infinite ease-in-out}
+@keyframes eq{0%,100%{height:3px}50%{height:11px}}
+
+/* ----------------------------------------------------------------- table */
+#table{max-width:1240px;margin:0 auto}
+
+.section{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 236px), 1fr));
+  gap:clamp(30px,3.4vw,50px) clamp(22px,2.6vw,40px);
+  margin:0 0 clamp(30px,3.6vw,50px);
+}
+.sec-head{
+  grid-column:1/-1;display:flex;align-items:center;gap:1.2em;
+  margin:clamp(14px,2vw,26px) 0 0;
+}
+.sec-head span{
+  font-size:clamp(10px,1.05vw,12px);letter-spacing:.24em;color:var(--muted);
+  white-space:nowrap;
+}
+.sec-head::after{content:"";flex:1;height:1px;background:var(--rule)}
+
+/* ------------------------------------------------------------ one thing */
+/* stories are different lengths — push the actions down so every "take it"
+   in a row sits on the same line */
+.thing{display:flex;flex-direction:column;margin:0;height:100%}
+.meta{display:flex;flex-direction:column;flex:1}
+.do{margin-top:auto}
+
+/* the object sitting on the table */
+.obj{
+  position:relative;display:block;width:100%;aspect-ratio:1/1;
+  border-radius:3px;
+  background:var(--tint,#ece5da);
+  transform:rotate(var(--rot,0deg)) translateY(0);
+  transition:transform .34s cubic-bezier(.22,.9,.3,1), box-shadow .34s cubic-bezier(.22,.9,.3,1);
+  box-shadow:
+    0 1px 1px rgba(74,58,44,.13),
+    0 6px 12px -4px rgba(74,58,44,.16),
+    0 18px 34px -18px rgba(74,58,44,.34);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  border:0;padding:0;overflow:hidden;
+}
+.obj img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transition:opacity .5s ease;
+}
+.obj img.in{opacity:1}
+/* the light falls the same way on every object, whatever the artwork is */
+.obj::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:
+    linear-gradient(158deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 38%),
+    linear-gradient(158deg, rgba(96,78,62,0) 58%, rgba(96,78,62,.11) 100%);
+  box-shadow:inset 0 0 0 1px rgba(74,58,44,.10);
+}
+
+.thing:hover .obj,
+.thing:focus-within .obj{
+  transform:rotate(var(--rot,0deg)) translateY(-7px);
+  box-shadow:
+    0 1px 1px rgba(74,58,44,.12),
+    0 12px 20px -6px rgba(74,58,44,.17),
+    0 34px 54px -24px rgba(74,58,44,.40);
+}
+.thing.is-playing .obj{
+  box-shadow:
+    0 1px 1px rgba(74,58,44,.12),
+    0 12px 20px -6px rgba(74,58,44,.17),
+    0 34px 54px -24px rgba(74,58,44,.40),
+    0 0 0 1px rgba(204,95,151,.42);
+}
+
+/* hear it */
+.hear{
+  position:absolute;left:10px;bottom:10px;z-index:2;
+  display:flex;align-items:center;gap:.55em;
+  border:0;border-radius:2px;margin:0;padding:7px 11px 7px 10px;
+  background:rgba(252,249,244,.90);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  box-shadow:0 1px 4px rgba(74,58,44,.20);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;
+  color:var(--pink-deep);cursor:pointer;
+  opacity:0;transform:translateY(4px);
+  transition:opacity .24s ease, transform .24s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.hear svg{width:9px;height:10px;fill:currentColor;flex:none}
+.thing:hover .hear,.thing:focus-within .hear,.thing.is-playing .hear{opacity:1;transform:none}
+.thing.is-playing .hear svg{opacity:.4}
+@media (hover:none){ .hear{opacity:1;transform:none} }
+
+/* -------------------------------------------------------------- the copy */
+.meta{padding-top:clamp(15px,1.5vw,21px)}
+
+.name{
+  margin:0;font-family:var(--mono);font-weight:700;
+  font-size:clamp(17px,1.55vw,21px);letter-spacing:-.005em;line-height:1.15;
+  color:var(--ink);
+}
+
+/* the rule under the name is that instrument's waveform, inked as it plays */
+.wave{display:block;width:100%;height:14px;margin:.5em 0 0}
+
+.story{
+  margin:.6em 0 0;font-family:var(--serif);
+  font-size:clamp(14.5px,1.4vw,17px);line-height:1.44;color:#544b5d;
+}
+.specs{
+  margin:.85em 0 0;font-size:clamp(9.5px,.95vw,11px);letter-spacing:.13em;
+  color:var(--faint);line-height:1.65;
+}
+/* break between specs, never inside one — "59.8 MB installed" stays together */
+.specs span{white-space:nowrap}
+.specs i{font-style:normal;padding:0 .62em}
+
+.do{display:flex;flex-wrap:wrap;align-items:center;gap:.55em 1.15em;padding-top:1.15em}
+.take{
+  display:inline-flex;align-items:baseline;gap:.6em;text-decoration:none;
+  color:var(--ink);font-size:clamp(11.5px,1.1vw,13px);letter-spacing:.13em;
+  padding:.62em 1.05em;border:1px solid var(--rule);border-radius:2px;
+  background:rgba(255,253,249,.62);
+  transition:border-color .2s ease,color .2s ease,background .2s ease;
+}
+.take em{font-style:normal;font-size:.8em;letter-spacing:.1em;color:var(--faint)}
+.take:hover{border-color:var(--pink);color:var(--pink-deep);background:#fff}
+.take:hover em{color:var(--pink)}
+
+.more{
+  text-decoration:none;color:var(--muted);
+  font-size:clamp(10px,1vw,11.5px);letter-spacing:.14em;transition:color .2s ease;
+}
+.more::before{content:"[ ";color:var(--faint)}
+.more::after{content:" ]";color:var(--faint)}
+.more:hover{color:var(--pink-deep)}
+
+/* ------------------------------------------------- the empty place setting */
+.thing--soon .slot{
+  width:100%;aspect-ratio:1/1;border-radius:3px;
+  border:1px dashed rgba(122,105,120,.55);
+  background:rgba(255,253,249,.34);
+  display:flex;align-items:center;justify-content:center;
+}
+.thing--soon .slot span{
+  font-size:clamp(10px,1.05vw,12px);letter-spacing:.22em;color:#8e849a;
+}
+.thing--soon .story{color:var(--muted)}
+
+/* ---------------------------------------------------------------- footer */
+#foot{
+  max-width:1320px;margin:0 auto;
+  display:flex;flex-wrap:wrap;gap:.8em 2em;align-items:baseline;
+  justify-content:space-between;
+  padding-top:clamp(22px,2.6vw,34px);
+  border-top:1px solid var(--rule);
+}
+.f-note{
+  margin:0;font-size:clamp(9.5px,.95vw,11px);letter-spacing:.1em;line-height:1.7;
+  color:#8d8494;max-width:64ch;
+}
+.f-note strong{color:var(--muted);font-weight:400}
+.f-brand{margin:0;font-size:clamp(9.5px,.95vw,11px);letter-spacing:.2em;color:var(--faint)}
+
+/* ---------------------------------------------------------------- narrow */
+@media (max-width:719px){
+  #mast{flex-direction:column;gap:1.1em;padding-bottom:26px}
+  .sound{margin-left:0}
+  .section{grid-template-columns:1fr;gap:26px}
+
+  /* on a phone each thing is a row: object left, words right */
+  .thing{display:grid;grid-template-columns:116px 1fr;gap:16px;align-items:start}
+  .obj{width:116px}
+  .meta{padding-top:2px;min-width:0}
+  .name{font-size:17px}
+  .story{font-size:14px;line-height:1.4;margin-top:.55em}
+  .specs{margin-top:.6em}
+  .do{padding-top:.85em;gap:.5em .9em}
+  .take{padding:.55em .9em;font-size:11.5px}
+  .hear{left:7px;bottom:7px;padding:6px 9px;font-size:9.5px}
+  .thing--soon .slot{width:116px}
+  .wave{height:13px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .obj,.hear{transition:none}
+  .thing:hover .obj,.thing:focus-within .obj{transform:rotate(var(--rot,0deg))}
+  .sound[aria-pressed="true"] .eq i{animation:none;height:7px}
+}
