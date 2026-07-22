@@ -9,8 +9,11 @@
             Leave it out and the picture becomes the play button instead —
             this page is the main page for the instruments, so only DEM-Osc
             (which needs the free checkout) sends anyone away.
-     audio  optional. assets/audio/<something>.mp3 — 8-20 seconds, loops.
-            Leave it out and that thing simply has no sound yet.
+     song   optional. The demo that plays when you click the picture — the
+            same one that was on the old product page. It streams straight
+            from clayandkelsy.com, so no audio ships in this repo and the
+            page loads with none of it. After adding or changing a song,
+            run  tools/waveforms.py  to refresh the drawn shapes.
      story  one or two sentences. This is the charm — say where it came from.
      take   the button. kind:'download' hits a file directly,
             kind:'page' sends them to a page (use this for anything that
@@ -32,7 +35,6 @@ const ITEMS = [
     art: 'assets/art/dem-osc.jpg',
     page: 'https://clayandkelsy.com/dem-osc/',
     tint: '#dbdbdb',
-    audio: 'assets/audio/dem-osc.mp3',
     story: 'She’s free. Now she just plays. Our demo oscillator, given away in full — no strings, no timer, nothing switched off.',
     specs: ['VST3 · AU', 'mac & windows'],
     features: [
@@ -56,7 +58,7 @@ const ITEMS = [
     kind: 'kontakt instrument',
     art: 'assets/art/gr808.jpg',
     tint: '#fef4ea',
-    audio: 'assets/audio/gr808.mp3',
+    song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/gr808.mp3',
     story: 'Our version of the beloved 808 kick — our most used sample, run through the Voice of God. Mix the mid and sides independently: a kick drum bass down low, a beautiful pad up high.',
     specs: ['requires the full version of Kontakt 6+', '127.1 MB installed'],
     features: [
@@ -78,7 +80,7 @@ const ITEMS = [
     kind: 'kontakt instrument',
     art: 'assets/art/agong.jpg',
     tint: '#fef0fd',
-    audio: 'assets/audio/agong.mp3',
+    song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/aGong.mp3',
     story: 'A little gong Clay bought from a market in Den Haag. The first thing we ever made for Kontakt — it goes from a peaceful meditation gong to a hammered EP.',
     specs: ['requires the full version of Kontakt 6+', '59.8 MB installed'],
     features: [
@@ -100,7 +102,7 @@ const ITEMS = [
     kind: 'kontakt instrument',
     art: 'assets/art/diddley-ebow.jpg',
     tint: '#f3fff5',
-    audio: 'assets/audio/diddley-ebow.mp3',
+    song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley-ebow.mp3',
     story: 'A one-string cigar box guitar built by Tom Burton at Chatsworth Guitars in Los Angeles, played with an Ebow and a DARK MATTER slide. It comes out a moody chorus pad with notes of acoustic slide guitar.',
     specs: ['requires the full version of Kontakt 6+', '126.1 MB installed'],
     features: [
@@ -122,7 +124,7 @@ const ITEMS = [
     kind: 'kontakt instrument',
     art: 'assets/art/diddley-plucks.jpg',
     tint: '#eff3ff',
-    audio: 'assets/audio/diddley-plucks.mp3',
+    song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley-Plucks.mp3',
     story: 'The same cigar box guitar, this time plucked with the slide. Cute and folky — the friendlier sibling of the ebow.',
     specs: ['requires the full version of Kontakt 6+', '331.2 MB installed'],
     features: [
@@ -144,7 +146,7 @@ const ITEMS = [
     kind: 'kontakt instrument',
     art: 'assets/art/wrenches.jpg',
     tint: '#ffeae9',
-    audio: 'assets/audio/wrenches.mp3',
+    song: 'https://clayandkelsy.com/wp-content/uploads/2023/09/Evrial-ish-1_2.mp3',
     story: 'We picked these up in the garage and they rang out — eerie, dissonant, somewhere near church bells. Two mallets made the cut: rubber and copper. Made with love.',
     /* NOTE: your product page says Wrenches needs Kontakt 7 or higher, not 6.
        If it does run in 6, change this line and tell me. */

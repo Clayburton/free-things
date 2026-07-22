@@ -1,7 +1,12 @@
 /* ==========================================================================
    FREE THINGS — the table
-   Builds the page from items.js, plays a demo clip per thing, and tells the
-   host iframe how tall it is. No canvas scene, no libraries.
+   Builds the page from items.js, streams each thing's demo when you click its
+   picture, and tells the host iframe how tall it is.
+
+   Nothing audio ships with this page. The demos stream straight from
+   clayandkelsy.com on click (preload="none", so the page costs nothing until
+   someone wants to hear something), and the shape drawn under each name comes
+   from waveforms.js — about 200 bytes per song.
 
    Debug: window.__free
    ========================================================================== */
@@ -18,120 +23,83 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
 const bindLast = s => s.replace(/ ([^ ]+)$/, '&nbsp;$1');
 
 // ------------------------------------------------------------------ audio --
-const A = {
-  ctx: null, master: null, analyser: null,
-  buffers: new Map(), envs: new Map(),
-  cur: null, curId: null, startedAt: 0, on: false, level: 0, raf: 0
-};
+// One <audio> element, re-pointed. No AudioContext, no decodeAudioData: a
+// 1 MB file decoded up front is a wait, streamed it starts almost at once.
+const A = { el: null, curId: null, level: 0, raf: 0, loading: false };
 
-function audioInit() {
-  if (A.ctx) return;
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  A.ctx = new AC();
-  A.master = A.ctx.createGain();
-  A.master.gain.value = 0.62;
-  A.analyser = A.ctx.createAnalyser();
-  A.analyser.fftSize = 256;
-  A.master.connect(A.analyser);
-  A.analyser.connect(A.ctx.destination);
+function player() {
+  if (A.el) return A.el;
+  const a = new Audio();
+  a.preload = 'none';
+  a.addEventListener('playing', () => { A.loading = false; paintAll(); });
+  a.addEventListener('ended',   () => stop());
+  a.addEventListener('error',   () => {
+    // a demo that won't load shouldn't leave a button that lies
+    const c = cards.get(A.curId);
+    if (c) { c.item._bad = true; paintOne(c); }
+    stop();
+  });
+  A.el = a;
+  return a;
 }
 
-// Is there actually a clip? Checked once, up front, so the page never offers
-// sound it doesn't have — and lights up on its own when the mp3s land.
-async function probe(item) {
-  if (!item.audio) { item._ok = false; return; }
-  try {
-    const r = await fetch(item.audio, { method: 'HEAD' });
-    item._ok = r.ok;
-  } catch (e) { item._ok = false; }
-  paintHear(item);
-}
-
-async function load(item) {
-  if (A.buffers.has(item.id)) return A.buffers.get(item.id);
-  const r = await fetch(item.audio, { cache: 'force-cache' });
-  if (!r.ok) throw new Error('no clip');
-  const buf = await A.ctx.decodeAudioData(await r.arrayBuffer());
-  A.buffers.set(item.id, buf);
-  A.envs.set(item.id, envelope(buf));
-  return buf;
-}
-
-// RMS-led, with peak for the jaggedness (same idea as the player)
-function envelope(buf, bins = 260) {
-  const ch = buf.getChannelData(0);
-  const per = Math.max(1, Math.floor(ch.length / bins));
-  const out = new Float32Array(bins);
-  let lo = 1e9, hi = 0;
-  for (let i = 0; i < bins; i++) {
-    let sum = 0, peak = 0;
-    const s = i * per, e = Math.min(s + per, ch.length);
-    for (let j = s; j < e; j++) { const v = ch[j]; sum += v * v; const a = v < 0 ? -v : v; if (a > peak) peak = a; }
-    const v = Math.sqrt(sum / Math.max(1, e - s)) * 0.78 + peak * 0.22;
-    out[i] = v; if (v < lo) lo = v; if (v > hi) hi = v;
-  }
-  // Stretch across the clip's own range so structure shows — but only if there
-  // IS structure. A held pad has a flat envelope and stretching it makes a slab.
-  const span = hi - lo;
-  if (span < hi * 0.20) for (let i = 0; i < bins; i++) out[i] = Math.min(1, out[i] / Math.max(1e-4, hi)) * 0.55;
-  else                  for (let i = 0; i < bins; i++) out[i] = Math.pow((out[i] - lo) / span, 0.78);
-  return out;
-}
-
-async function play(item) {
-  audioInit();
-  if (!A.ctx) return;
-  if (A.ctx.state === 'suspended') await A.ctx.resume();
-  if (A.curId === item.id) return;
+function play(item) {
+  if (A.curId === item.id) { stop(); return; }
   stop();
-  let buf;
-  try { buf = await load(item); }
-  catch (e) { item._ok = false; paintHear(item); return; }
-
-  const src = A.ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  const g = A.ctx.createGain();
-  g.gain.setValueAtTime(0.0001, A.ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(1, A.ctx.currentTime + 0.28);
-  src.connect(g); g.connect(A.master);
-  src.start();
-  A.cur = { src, g, dur: buf.duration };
-  A.curId = item.id; A.startedAt = A.ctx.currentTime; A.on = true;
+  const a = player();
+  A.curId = item.id;
+  A.loading = true;
+  A.level = 0;
+  a.src = item.song;
+  const p = a.play();
+  if (p && p.catch) p.catch(() => { A.curId = null; A.loading = false; paintAll(); });
   paintAll();
   if (!A.raf) tick();
 }
 
 function stop() {
-  if (A.cur) {
-    const { src, g } = A.cur, t = A.ctx.currentTime;
-    try {
-      g.gain.cancelScheduledValues(t);
-      g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-      src.stop(t + 0.24);
-    } catch (e) {}
-  }
   const was = A.curId;
-  A.cur = null; A.curId = null;
+  if (A.el) { try { A.el.pause(); } catch (e) {} }
+  A.curId = null; A.loading = false; A.level = 0;
+  if (A.raf) { cancelAnimationFrame(A.raf); A.raf = 0; }
   if (was) { paintAll(); drawWave(was); }
 }
 
-const pos = () => (A.cur && A.ctx) ? ((A.ctx.currentTime - A.startedAt) % A.cur.dur) / A.cur.dur : -1;
+const progress = () => {
+  const a = A.el;
+  return (a && a.duration) ? Math.min(1, a.currentTime / a.duration) : 0;
+};
 
 function tick() {
   A.raf = requestAnimationFrame(tick);
-  if (!A.cur) { cancelAnimationFrame(A.raf); A.raf = 0; return; }
-  const arr = new Uint8Array(A.analyser.frequencyBinCount);
-  A.analyser.getByteTimeDomainData(arr);
-  let peak = 0;
-  for (let i = 0; i < arr.length; i++) { const v = Math.abs(arr[i] - 128) / 128; if (v > peak) peak = v; }
-  A.level += (peak - A.level) * (peak > A.level ? 0.16 : 0.06);
+  if (!A.curId) { cancelAnimationFrame(A.raf); A.raf = 0; return; }
+  // the bead breathes with the song's own shape at the playhead — no analyser
+  // needed, and it works identically however the audio is served
+  const env = envOf(A.curId);
+  let v = 0;
+  if (env) v = env[Math.min(env.length - 1, Math.floor(progress() * env.length))] || 0;
+  A.level += (v - A.level) * 0.14;
   drawWave(A.curId);
 }
 
+// ---------------------------------------------------------------- shapes --
+const ENV = new Map();
+function envOf(id) {
+  if (ENV.has(id)) return ENV.get(id);
+  const b64 = (window.WAVES || {})[id];
+  if (!b64) { ENV.set(id, null); return null; }
+  let out = null;
+  try {
+    const bin = atob(b64);
+    out = new Float32Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i) / 255;
+  } catch (e) { out = null; }
+  ENV.set(id, out);
+  return out;
+}
+
 // ------------------------------------------------------------------ build --
-const cards = new Map();   // id -> { item, root, wave, hear }
+const cards = new Map();
 let DPR = 1;
 
 function build() {
@@ -153,17 +121,17 @@ function build() {
   };
   newSection(null);
 
-  items.forEach((it, i) => {
+  let n = 0;
+  items.forEach(it => {
     if (it.divider) {
       if (it.end) { sec.appendChild(soonCard(it)); return; }
       newSection(it.divider);
       return;
     }
-    sec.appendChild(thingCard(it, i));
+    sec.appendChild(thingCard(it, n++));
   });
 
   table.appendChild(frag);
-  items.filter(i => !i.divider).forEach(probe);
 }
 
 function soonCard(it) {
@@ -193,22 +161,25 @@ function thingCard(it, i) {
   // would be invalid HTML.
   const objTag = it.page
     ? `<a class="obj" href="${esc(it.page)}" target="_top" aria-label="${esc(it.title)} — read more">`
-    : it.audio
-      ? `<button class="obj" type="button" disabled aria-label="Hear ${esc(it.title)}">`
+    : it.song
+      ? `<button class="obj" type="button" aria-label="Hear ${esc(it.title)}">`
       : `<div class="obj">`;
-  const objEnd = it.page ? '</a>' : it.audio ? '</button>' : '</div>';
+  const objEnd = it.page ? '</a>' : it.song ? '</button>' : '</div>';
+
+  // the first row is what people see first — everything below can wait
+  const eager = i < 3;
 
   a.innerHTML = `
     <div class="objwrap">
-      ${objTag}<img alt="" decoding="async">${objEnd}
-      <button class="hear" type="button" hidden aria-label="Hear ${esc(it.title)}">
+      ${objTag}<img alt="" decoding="async"${eager ? ' fetchpriority="high"' : ' loading="lazy"'}>${objEnd}
+      ${it.song ? `<button class="hear" type="button" aria-label="Hear ${esc(it.title)}">
         <svg viewBox="0 0 16 18" aria-hidden="true"><path d="M1.2 1.1 15 9 1.2 16.9Z"/></svg>
         <span class="hl">hear it</span>
-      </button>
+      </button>` : ''}
     </div>
     <div class="meta">
       <h2 class="name">${esc(it.title)}</h2>
-      <canvas class="wave" aria-hidden="true"></canvas>
+      ${it.song ? '<canvas class="wave" aria-hidden="true"></canvas>' : ''}
       <p class="story">${esc(it.story)}</p>
       <p class="specs">${(it.specs || []).map(s =>
         `<span${s.length < 20 ? ' class="nb"' : ''}>${bindLast(esc(s))}</span>`).join('<i>·</i>')}</p>
@@ -228,53 +199,48 @@ function thingCard(it, i) {
   img.onerror = () => postHeight();
   img.src = it.art;
 
-  const toggle = e => {
-    e.preventDefault(); e.stopPropagation();
-    if (it._ok !== true) return;
-    if (A.curId === it.id) stop(); else play(it);
-  };
-  hear.addEventListener('click', toggle);
-  if (!it.page && it.audio) obj.addEventListener('click', toggle);
+  if (it.song) {
+    const toggle = e => { e.preventDefault(); e.stopPropagation(); if (!it._bad) play(it); };
+    hear.addEventListener('click', toggle);
+    obj.addEventListener('click', toggle);
+  }
 
   cards.set(it.id, { item: it, root: a, wave: $('.wave', a), hear, obj });
   return a;
 }
 
 // ------------------------------------------------------------------ paint --
-function paintHear(item) {
-  const c = cards.get(item.id);
-  if (!c) return;
-  const has = item._ok === true;
-  c.hear.hidden = !has;
-  // when the picture is the play control, it stays inert until a clip is confirmed
-  if (c.obj.tagName === 'BUTTON') c.obj.disabled = !has;
-  el('soundBtn').hidden = !(window.ITEMS || []).some(i => i._ok === true);
-  sizeWave(c);
+function paintOne(c) {
+  const on   = A.curId === c.item.id;
+  const busy = on && A.loading;
+  c.root.classList.toggle('is-playing', on);
+  if (c.hear) {
+    c.hear.hidden = !!c.item._bad;
+    const l = $('.hl', c.hear);
+    if (l) l.textContent = busy ? 'loading' : on ? 'playing' : 'hear it';
+  }
+  if (c.obj && c.obj.tagName === 'BUTTON') c.obj.disabled = !!c.item._bad;
 }
 
 function paintAll() {
-  cards.forEach(c => {
-    const on = A.curId === c.item.id;
-    c.root.classList.toggle('is-playing', on);
-    const l = $('.hl', c.root);
-    if (l) l.textContent = on ? 'playing' : 'hear it';
-  });
+  cards.forEach(paintOne);
   const b = el('soundBtn');
+  b.hidden = !A.curId;                       // it's a stop button, so only while playing
   b.setAttribute('aria-pressed', A.curId ? 'true' : 'false');
-  $('.sb-label', b).textContent = A.curId ? 'sound on' : 'sound off';
 }
 
 function sizeWave(c) {
+  if (!c.wave) return;
   const w = c.wave.clientWidth, h = c.wave.clientHeight;
   if (!w || !h) return;
-  c.wave.width = Math.round(w * DPR);
+  c.wave.width  = Math.round(w * DPR);
   c.wave.height = Math.round(h * DPR);
   drawWave(c.item.id);
 }
 
 function drawWave(id) {
   const c = cards.get(id);
-  if (!c || !c.wave.width) return;
+  if (!c || !c.wave || !c.wave.width) return;
   const x = c.wave.getContext('2d');
   const w = c.wave.width, h = c.wave.height, mid = h / 2;
   x.clearRect(0, 0, w, h);
@@ -283,18 +249,22 @@ function drawWave(id) {
   x.lineWidth = Math.max(1, DPR);
   x.beginPath(); x.moveTo(0, mid); x.lineTo(w, mid); x.stroke();
 
-  const env = A.envs.get(id);
+  const env = envOf(id);
   if (!env) return;
 
   const playing = A.curId === id;
-  const p = playing ? pos() : -1;
-  const inkX = p >= 0 ? p * w : 0;
+  const inkX = playing ? progress() * w : 0;
   const amp = h * 0.40 * (playing ? (0.82 + 0.30 * A.level) : 0.66);
   const bar = w / env.length;
   for (let i = 0; i < env.length; i++) {
     const bx = i * bar, a = env[i] * amp;
     x.fillStyle = bx < inkX ? 'rgba(204,95,151,.92)' : 'rgba(43,35,51,.20)';
     x.fillRect(bx, mid - a, Math.max(1, bar * 0.6), a * 2);
+  }
+  if (playing && inkX > 0) {
+    x.fillStyle = 'rgba(179,74,130,1)';
+    const r = Math.max(1.6, DPR * 1.5) * (1 + A.level * 0.5);
+    x.beginPath(); x.arc(inkX, mid, r, 0, 6.2832); x.fill();
   }
 }
 
@@ -313,11 +283,7 @@ function boot() {
   build();
   paintAll();
 
-  el('soundBtn').addEventListener('click', () => {
-    if (A.curId) { stop(); return; }
-    const first = (window.ITEMS || []).find(i => i._ok === true);
-    if (first) play(first);
-  });
+  el('soundBtn').addEventListener('click', stop);
 
   const relayout = () => {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -342,7 +308,10 @@ function boot() {
   setTimeout(postHeight, 1400);
 }
 
-window.__free = { A, cards, play, stop, postHeight, drawWave, get height(){ return lastH; } };
+window.__free = {
+  A, cards, play, stop, postHeight, drawWave, envOf,
+  get height() { return lastH; }
+};
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();

@@ -7,8 +7,8 @@ All of it visible at once — no carousel, no digging. Each thing sits on the
 table with its story under it; touch one and it plays; take whatever you want.
 An empty place setting at the end marks where the next thing goes.
 
-Plain DOM and CSS. No canvas, no libraries, no CDN. **31 KB of code** plus
-446 KB of artwork.
+Plain DOM and CSS. No canvas, no libraries, no CDN. **~33 KB of code plus
+282 KB of artwork — and zero bytes of audio until someone asks for it.**
 
 ---
 
@@ -23,7 +23,7 @@ Open `items.js` and add one object. Nothing else in the project changes.
   art:   'assets/art/collide.jpg',       // any square image
   page:  'https://clayandkelsy.com/collide-trial/',   // optional — see below
   tint:  '#e8e2ee',                      // its background colour
-  audio: 'assets/audio/collide.mp3',     // optional
+  song:  'https://clayandkelsy.com/wp-content/uploads/…/collide.mp3',  // optional
   story: 'A sentence or two. Say where it came from — that\'s the charm.',
   specs: ['VST3 · AU', '30 days'],
   take:  { kind: 'page', href: 'https://clayandkelsy.com/collide-trial/' },
@@ -35,7 +35,7 @@ Open `items.js` and add one object. Nothing else in the project changes.
 `{ divider:'more soon', end:true }` so the empty place setting stays last.
 
 **The artwork can be anything** — a drawing, a screenshot of the plugin, a
-photo. Square, 860 px or larger, jpg or png. The table gives every image the
+photo. Square, 700 px or larger, jpg or png. The table gives every image the
 same light, the same edge, the same shadow and the same faint hand-placed tilt,
 so wildly different pictures still read as one set. There is no style to match.
 
@@ -56,14 +56,27 @@ When there are enough plugin trials to be worth grouping, uncomment the
 
 ## Audio
 
-See `assets/audio/README.md`. Short answer: drop `<id>.mp3` in that folder,
-8–20 seconds, instrument alone, something that loops.
+Clicking a picture plays that instrument's demo — **the same piece that was on
+its old product page**, streamed straight from `clayandkelsy.com/wp-content/
+uploads/`. No audio is copied into this repo.
 
-The waveform under each name is measured from the clip in the browser — nothing
-to build, nothing to regenerate. Until a clip exists that tile has **no play
-button and can't be clicked** (the page checks with one `HEAD` request before
-offering anything), and the rule under the name stays a plain hairline. It all
-lights up on its own the moment the files land.
+Three things make that fast:
+
+- `preload="none"` and no `<audio>` element is even created until the first
+  click, so the page costs nothing to load.
+- It **streams** rather than decoding. A `decodeAudioData` on a 1 MB file means
+  waiting for the whole download first; streaming starts in about 300 ms.
+- The shape drawn under each name comes from `waveforms.js` — roughly 200 bytes
+  per song, measured up front by `tools/waveforms.py`. So every song shows its
+  real waveform the instant the page loads, without downloading a note.
+
+There is no analyser: the playhead comes from `audio.currentTime` and the bead
+breathes on the song's own measured shape. That works the same however the
+audio is served, and needs no AudioContext.
+
+**After adding or changing a `song:` URL, run `tools/waveforms.py`.** It reads
+the URLs out of `items.js` itself, so there's nothing to keep in sync.
+Never hand-edit `waveforms.js`.
 
 ## Running it
 
@@ -103,3 +116,9 @@ never scrolls inside itself and never leaves a gap underneath.
 - A previous version of this page was a record crate you dragged through. It's
   in git history. Clay's note: the snapping felt strange, and digging is work —
   a giveaway shouldn't make you work.
+- The demos live on Clay's WordPress uploads and are served with
+  `access-control-allow-origin: *` and `accept-ranges: bytes`. If those files
+  are ever moved or renamed, playback breaks — the old product pages point at
+  the same URLs, so they should stay put.
+- Artwork is 700px for a tile that renders ~330px at most; the first row is
+  `fetchpriority="high"`, everything below is `loading="lazy"`.
