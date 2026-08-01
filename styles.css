@@ -110,7 +110,7 @@ body{
 /* ------------------------------------------------------------ one thing */
 /* stories are different lengths — push the actions down so every "take it"
    in a row sits on the same line */
-.thing{display:flex;flex-direction:column;margin:0;height:100%}
+.thing{display:flex;flex-direction:column;margin:0;height:100%;position:relative}
 .meta{display:flex;flex-direction:column;flex:1}
 .do{margin-top:auto}
 
@@ -120,6 +120,9 @@ body{
   position:relative;width:100%;
   transform:rotate(var(--rot,0deg)) translateY(0);
   transition:transform .34s cubic-bezier(.22,.9,.3,1);
+  /* a sideways drag is ours (swipe to the interface); an up-down one is the
+     page's, so a finger landing on a tile can still scroll */
+  touch-action:pan-y;
 }
 .obj{
   position:relative;display:block;width:100%;aspect-ratio:1/1;
@@ -166,6 +169,49 @@ body{
     0 34px 54px -24px rgba(74,58,44,.40),
     0 0 0 1px rgba(204,95,151,.42);
 }
+
+/* ------------------------------------------------- what it actually looks like */
+/* the second image, sitting in the tile on a phone (hidden until swiped to) */
+.obj .gui{
+  position:absolute;inset:0;z-index:1;
+  width:100%;height:100%;object-fit:contain;
+  padding:7%;background:#fdfbf7;
+  opacity:0;pointer-events:none;
+  transition:opacity .26s ease;
+}
+.thing.shows-gui .obj .gui{opacity:1}
+.thing.shows-gui .obj .art{opacity:0}
+
+/* the arrow — only on touch, where there is no hover to rely on */
+.peek{
+  position:absolute;right:8px;top:50%;z-index:3;
+  transform:translateY(-50%);
+  display:none;align-items:center;justify-content:center;
+  width:30px;height:30px;padding:0;margin:0;border:0;border-radius:50%;
+  background:rgba(252,249,244,.92);color:var(--pink-deep);
+  box-shadow:0 1px 5px rgba(74,58,44,.24);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .3s cubic-bezier(.3,.9,.3,1);
+}
+.peek svg{width:11px;height:16px;display:block;margin-left:-1px}
+.peek.back{transform:translateY(-50%) rotate(180deg)}
+@media (hover:none),(pointer:coarse){ .peek{display:flex} }
+
+/* the panel — on a computer the interface opens beside the tile, bigger than
+   the tile, because these are wide screenshots and a square squashes them */
+.panel{
+  position:absolute;z-index:20;
+  width:min(560px, 78vw);
+  padding:10px;border-radius:4px;
+  background:#fdfbf7;
+  box-shadow:0 2px 6px rgba(74,58,44,.16), 0 26px 54px -14px rgba(74,58,44,.42);
+  opacity:0;transform:translateY(6px) scale(.985);transform-origin:50% 0;
+  transition:opacity .2s ease, transform .2s cubic-bezier(.22,.9,.3,1);
+  pointer-events:none;
+}
+.panel.in{opacity:1;transform:none}
+.panel img{width:100%;height:auto;display:block;border-radius:2px}
+@media (hover:none),(pointer:coarse){ .panel{display:none} }
 
 /* hear it */
 .hear{
@@ -285,6 +331,14 @@ a.slot:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
   .do{padding-top:.85em;gap:.5em .9em}
   .take{padding:.55em .9em;font-size:11.5px}
   .hear{left:7px;bottom:7px;padding:6px 9px;font-size:9.5px}
+  /* the interface is a wide screenshot — at thumbnail size it's a smudge, so
+     while it's showing the tile takes the whole row and the words drop below */
+  .thing.shows-gui{grid-template-columns:1fr;gap:12px}
+  .thing.shows-gui .objwrap,
+  .thing.shows-gui .obj{width:100%}
+  .thing.shows-gui .obj{aspect-ratio:1.85/1}
+  .thing.shows-gui .obj .gui{padding:3%}
+
   .thing--soon .slot{width:116px;padding:8px}
   .thing--soon .slot span{letter-spacing:.14em;line-height:1.7}
   .wave{height:13px}

@@ -4,7 +4,11 @@
    TO ADD A NEW FREE THING, add one object to ITEMS below. That's it.
 
      art    square image, any style (drawing, plugin screenshot, photo).
-            Put it in assets/art/. 860x860 or larger, jpg or png.
+            Put it in assets/art/. 700x700 or larger, jpg or png.
+     gui    OPTIONAL second image — what the instrument actually looks like.
+            Put it in assets/gui/. Hover the tile on a computer to see it;
+            on a phone an arrow appears and you swipe. It is only fetched
+            when someone asks for it, so it costs nothing on load.
      page   OPTIONAL. If present, clicking the picture opens that page.
             Leave it out and the picture becomes the play button instead —
             this page is the main page for the instruments, so only DEM-Osc
@@ -33,6 +37,7 @@ const ITEMS = [
     title: 'DEM-Osc',
     kind: 'free plugin · VST3 · AU',
     art: 'assets/art/dem-osc.jpg',
+    gui: 'assets/gui/dem-osc.jpg',
     page: 'https://clayandkelsy.com/dem-osc/',
     tint: '#dbdbdb',
     story: 'She’s free. Now she just plays. Our demo oscillator, given away in full — no strings, no timer, nothing switched off.',
@@ -57,6 +62,7 @@ const ITEMS = [
     title: 'gr808 kick',
     kind: 'kontakt instrument',
     art: 'assets/art/gr808.jpg',
+    gui: 'assets/gui/gr808.jpg',
     tint: '#fef4ea',
     song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/gr808.mp3',
     story: 'Our version of the beloved 808 kick — our most used sample, run through the Voice of God. Mix the mid and sides independently: a kick drum bass down low, a beautiful pad up high.',
@@ -79,6 +85,7 @@ const ITEMS = [
     title: 'aGong',
     kind: 'kontakt instrument',
     art: 'assets/art/agong.jpg',
+    gui: 'assets/gui/agong.jpg',
     tint: '#fef0fd',
     song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/aGong.mp3',
     story: 'A little gong Clay bought from a market in Den Haag. The first thing we ever made for Kontakt — it goes from a peaceful meditation gong to a hammered EP.',
@@ -101,6 +108,7 @@ const ITEMS = [
     title: 'Diddley ebow',
     kind: 'kontakt instrument',
     art: 'assets/art/diddley-ebow.jpg',
+    gui: 'assets/gui/diddley-ebow.jpg',
     tint: '#f3fff5',
     song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley-ebow.mp3',
     story: 'A one-string cigar box guitar built by Tom Burton at Chatsworth Guitars in Los Angeles, played with an Ebow and a DARK MATTER slide. It comes out a moody chorus pad with notes of acoustic slide guitar.',
@@ -123,6 +131,7 @@ const ITEMS = [
     title: 'Diddley plucks',
     kind: 'kontakt instrument',
     art: 'assets/art/diddley-plucks.jpg',
+    gui: 'assets/gui/diddley-plucks.jpg',
     tint: '#eff3ff',
     song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley-Plucks.mp3',
     story: 'The same cigar box guitar, this time plucked with the slide. Cute and folky — the friendlier sibling of the ebow.',
@@ -145,6 +154,7 @@ const ITEMS = [
     title: 'Wrenches',
     kind: 'kontakt instrument',
     art: 'assets/art/wrenches.jpg',
+    gui: 'assets/gui/wrenches.jpg',
     tint: '#ffeae9',
     song: 'https://clayandkelsy.com/wp-content/uploads/2023/09/Evrial-ish-1_2.mp3',
     story: 'We picked these up in the garage and they rang out — eerie, dissonant, somewhere near church bells. Two mallets made the cut: rubber and copper. Made with love.',

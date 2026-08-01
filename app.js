@@ -175,12 +175,17 @@ function thingCard(it, i) {
 
   a.innerHTML = `
     <div class="objwrap">
-      ${objTag}<img alt="" decoding="async"${eager ? ' fetchpriority="high"' : ' loading="lazy"'}>${objEnd}
+      ${objTag}<img class="art" alt="" decoding="async"${eager ? ' fetchpriority="high"' : ' loading="lazy"'}>${
+        it.gui ? `<img class="gui" alt="" decoding="async">` : ''}${objEnd}
+      ${it.gui ? `<button class="peek" type="button" aria-label="See what ${esc(it.title)} looks like">
+        <svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2 1.5 10.5 10 2 18.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>
+      </button>` : ''}
       ${it.song ? `<button class="hear" type="button" aria-label="Hear ${esc(it.title)}">
         <svg viewBox="0 0 16 18" aria-hidden="true"><path d="M1.2 1.1 15 9 1.2 16.9Z"/></svg>
         <span class="hl">hear it</span>
       </button>` : ''}
     </div>
+    ${it.gui ? '<div class="panel" hidden><img alt="" decoding="async"></div>' : ''}
     <div class="meta">
       <h2 class="name">${esc(it.title)}</h2>
       ${it.song ? '<canvas class="wave" aria-hidden="true"></canvas>' : ''}
@@ -196,21 +201,136 @@ function thingCard(it, i) {
     </div>`;
 
   const obj  = $('.obj', a);
-  const img  = $('img', a);
+  const img  = $('img.art', a);
   const hear = $('.hear', a);
 
   img.onload  = () => { img.classList.add('in'); postHeight(); };
   img.onerror = () => postHeight();
   img.src = it.art;
 
+  const card = { item: it, root: a, wave: $('.wave', a), hear, obj,
+                 wrap: $('.objwrap', a), gui: $('.gui', a), panel: $('.panel', a),
+                 peek: $('.peek', a), view: 0, swiped: false };
+
   if (it.song) {
-    const toggle = e => { e.preventDefault(); e.stopPropagation(); if (!it._bad) play(it); };
+    const toggle = e => {
+      e.preventDefault(); e.stopPropagation();
+      if (card.swiped) { card.swiped = false; return; }   // a swipe is not a tap
+      if (!it._bad) play(it);
+    };
     hear.addEventListener('click', toggle);
     obj.addEventListener('click', toggle);
   }
 
-  cards.set(it.id, { item: it, root: a, wave: $('.wave', a), hear, obj });
+  if (it.gui) wireGui(card);
+
+  cards.set(it.id, card);
   return a;
+}
+
+// -------------------------------------------------------------- the interface --
+// Each thing has a second image: what the instrument actually looks like. It is
+// never fetched until someone asks for it, so it costs nothing on load.
+//
+// On a computer you hover the tile and the interface opens beside it, wider
+// than the tile, because these are landscape screenshots and squeezing one into
+// a square makes it too small to read.
+// On a phone there is no hover, so an arrow appears on the tile: tap it, or
+// swipe the tile sideways, and the interface takes the tile's place.
+const finePointer = () =>
+  window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+function loadGui(card) {
+  const img = card.gui;
+  if (img && !img.src) img.src = card.item.gui;
+  const p = card.panel && card.panel.querySelector('img');
+  if (p && !p.src) p.src = card.item.gui;
+}
+
+// put the panel beside the tile, then pull it back inside the page if it would
+// hang off an edge — the tiles in the last column would otherwise be clipped
+function placePanel(card) {
+  const panel = card.panel;
+  panel.hidden = false;
+  const pad = 14;
+  const page = document.getElementById('page');
+  const pageBox = page.getBoundingClientRect();
+  const tile = card.wrap.getBoundingClientRect();
+  const w = panel.offsetWidth;
+  let left = tile.left + tile.width / 2 - w / 2;
+  left = Math.max(pageBox.left + pad, Math.min(left, pageBox.right - w - pad));
+  // .thing is the positioning parent
+  const host = card.root.getBoundingClientRect();
+  panel.style.left = Math.round(left - host.left) + 'px';
+  panel.style.top  = Math.round(tile.top - host.top) + 'px';
+}
+
+function showPanel(card, on) {
+  if (!card.panel) return;
+  if (on) {
+    loadGui(card);
+    placePanel(card);
+    requestAnimationFrame(() => card.panel.classList.add('in'));
+  } else {
+    card.panel.classList.remove('in');
+    card.panel.hidden = true;
+  }
+}
+
+function setView(card, v) {
+  card.view = v;
+  if (v) loadGui(card);
+  card.root.classList.toggle('shows-gui', !!v);
+  if (card.peek) {
+    card.peek.classList.toggle('back', !!v);
+    card.peek.setAttribute('aria-label', v
+      ? `Back to ${card.item.title}`
+      : `See what ${card.item.title} looks like`);
+  }
+  // on a phone the tile grows to full width for the interface, so the page
+  // gets taller and the host iframe has to follow
+  setTimeout(postHeight, 340);
+}
+
+function wireGui(card) {
+  // --- computer: hover opens the interface beside the tile
+  let over = false;
+  card.wrap.addEventListener('pointerenter', e => {
+    if (e.pointerType === 'touch' || !finePointer()) return;
+    over = true;
+    showPanel(card, true);
+  });
+  card.wrap.addEventListener('pointerleave', () => {
+    if (!over) return;
+    over = false;
+    showPanel(card, false);
+  });
+
+  // --- phone: the arrow, and swiping the tile
+  card.peek.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    setView(card, card.view ? 0 : 1);
+  });
+
+  let x0 = 0, y0 = 0, tracking = false;
+  card.wrap.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') return;
+    tracking = true; x0 = e.clientX; y0 = e.clientY; card.swiped = false;
+  });
+  card.wrap.addEventListener('pointermove', e => {
+    if (!tracking) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    // only claim the gesture once it is clearly sideways, so the page can
+    // still be scrolled with a finger that starts on a tile
+    if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      tracking = false;
+      card.swiped = true;
+      setView(card, dx < 0 ? 1 : 0);
+    }
+  });
+  const done = () => { tracking = false; };
+  card.wrap.addEventListener('pointerup', done);
+  card.wrap.addEventListener('pointercancel', () => { tracking = false; card.swiped = false; });
 }
 
 // ------------------------------------------------------------------ paint --

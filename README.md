@@ -54,6 +54,25 @@ picture becomes the play button instead: a big, obvious target.
 When there are enough plugin trials to be worth grouping, uncomment the
 `{ divider: 'plugins' }` line in `items.js` and they get their own heading.
 
+## Seeing the interface
+
+Every thing has a second image in `assets/gui/` — what the instrument actually
+looks like. On a computer you hover the tile and it opens beside it, wider than
+the tile, because these are landscape screenshots and squeezing one into a
+square makes it too small to read. On a phone there is no hover, so an arrow
+sits on the tile: tap it, or swipe the tile sideways, and the interface takes
+the tile's place at full row width.
+
+None of them are fetched until someone asks — a cold load pulls zero of the six.
+
+They came from Clay's own Pianobook pack pages (`pianobook.co.uk/packs/<slug>/`)
+except DEM-Osc, which is on her own uploads. Encoded at 1100px wide, JPEG q5 —
+about 60 KB each, and the thin UI lines stay crisp at that setting.
+
+A nice accident: each interface contains the same hand-drawn object as its
+tile, so the hover reads as the drawing revealing the instrument built around
+it rather than a swap to something unrelated.
+
 ## Audio
 
 Clicking a picture plays that instrument's demo — **the same piece that was on
@@ -122,3 +141,11 @@ never scrolls inside itself and never leaves a gap underneath.
   the same URLs, so they should stay put.
 - Artwork is 700px for a tile that renders ~330px at most; the first row is
   `fetchpriority="high"`, everything below is `loading="lazy"`.
+- The GUI image must live INSIDE the `.obj` element, not beside it — as a
+  sibling it escapes `.obj .gui` positioning and renders inline at its full
+  1100px, which throws the whole page out.
+- On a phone the tile is only 116px, so the interface has to break out to full
+  row width or it is unreadable. That changes the page height, so `setView`
+  re-posts it to the host.
+- `touch-action:pan-y` on `.objwrap` is what lets a sideways drag be the swipe
+  while an up-down one still scrolls the page.
