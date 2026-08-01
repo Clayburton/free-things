@@ -175,9 +175,9 @@ body{
 .obj .gui{
   position:absolute;inset:0;z-index:1;
   width:100%;height:100%;object-fit:contain;
-  padding:7%;background:#fdfbf7;
+  padding:5%;background:#fdfbf7;
   opacity:0;pointer-events:none;
-  transition:opacity .26s ease;
+  transition:opacity .24s ease;
 }
 .thing.shows-gui .obj .gui{opacity:1}
 .thing.shows-gui .obj .art{opacity:0}
@@ -196,22 +196,6 @@ body{
 .peek svg{width:11px;height:16px;display:block;margin-left:-1px}
 .peek.back{transform:translateY(-50%) rotate(180deg)}
 @media (hover:none),(pointer:coarse){ .peek{display:flex} }
-
-/* the panel — on a computer the interface opens beside the tile, bigger than
-   the tile, because these are wide screenshots and a square squashes them */
-.panel{
-  position:absolute;z-index:20;
-  width:min(560px, 78vw);
-  padding:10px;border-radius:4px;
-  background:#fdfbf7;
-  box-shadow:0 2px 6px rgba(74,58,44,.16), 0 26px 54px -14px rgba(74,58,44,.42);
-  opacity:0;transform:translateY(6px) scale(.985);transform-origin:50% 0;
-  transition:opacity .2s ease, transform .2s cubic-bezier(.22,.9,.3,1);
-  pointer-events:none;
-}
-.panel.in{opacity:1;transform:none}
-.panel img{width:100%;height:auto;display:block;border-radius:2px}
-@media (hover:none),(pointer:coarse){ .panel{display:none} }
 
 /* hear it */
 .hear{

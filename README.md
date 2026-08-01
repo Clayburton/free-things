@@ -7,8 +7,8 @@ All of it visible at once — no carousel, no digging. Each thing sits on the
 table with its story under it; touch one and it plays; take whatever you want.
 An empty place setting at the end marks where the next thing goes.
 
-Plain DOM and CSS. No canvas, no libraries, no CDN. **~33 KB of code plus
-282 KB of artwork — and zero bytes of audio until someone asks for it.**
+Plain DOM and CSS. No canvas, no libraries, no CDN. **A cold visit is ~245 KB
+all in** — no audio and no interface screenshots until someone asks for them.
 
 ---
 
@@ -57,17 +57,17 @@ When there are enough plugin trials to be worth grouping, uncomment the
 ## Seeing the interface
 
 Every thing has a second image in `assets/gui/` — what the instrument actually
-looks like. On a computer you hover the tile and it opens beside it, wider than
-the tile, because these are landscape screenshots and squeezing one into a
-square makes it too small to read. On a phone there is no hover, so an arrow
-sits on the tile: tap it, or swipe the tile sideways, and the interface takes
-the tile's place at full row width.
+looks like. On a computer, hovering the tile turns it into the interface, inside
+the same square. On a phone there is no hover, so an arrow sits on the tile: tap
+it, or swipe the tile sideways, and the interface takes the tile's place at full
+row width (at the 116px thumbnail size it would be unreadable).
 
-None of them are fetched until someone asks — a cold load pulls zero of the six.
+None of them are fetched on load — a cold visit pulls zero of the six. Each one
+is fetched as the pointer enters its card, so by the time the hover lands it is
+already there.
 
 They came from Clay's own Pianobook pack pages (`pianobook.co.uk/packs/<slug>/`)
-except DEM-Osc, which is on her own uploads. Encoded at 1100px wide, JPEG q5 —
-about 60 KB each, and the thin UI lines stay crisp at that setting.
+except DEM-Osc, which is on her own uploads.
 
 A nice accident: each interface contains the same hand-drawn object as its
 tile, so the hover reads as the drawing revealing the instrument built around
@@ -96,6 +96,24 @@ audio is served, and needs no AudioContext.
 **After adding or changing a `song:` URL, run `tools/waveforms.py`.** It reads
 the URLs out of `items.js` itself, so there's nothing to keep in sync.
 Never hand-edit `waveforms.js`.
+
+## Images
+
+`tools/images.sh` rebuilds every web image from the full-size originals in
+`tools/originals/` (gitignored — they are 6.9 MB and never shipped). Run it
+after adding or replacing any picture.
+
+It writes **both** a `.webp` and a `.jpg` for each. The page asks for the webp
+and falls back to the jpg by itself, so nobody on an older machine gets a blank
+tile — a browser only ever downloads one of the two. Safari only learned webp in
+14, and plenty of people making music are on older machines, so the fallback
+earns its keep.
+
+Sizes are set by what the page actually renders, not by what came in: artwork
+640px (the tile is at most ~320px, so 2x for a retina screen), interfaces 760px
+(they go full row width on a phone). WebP saves about a third over jpeg on the
+artwork and nearly two thirds on the interface screenshots, with no visible
+difference — the thin UI lines were checked at 4x zoom.
 
 ## Running it
 

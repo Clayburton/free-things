@@ -22,6 +22,29 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
 // tie the last word on so a wrap can't strand it — keeps "Kontakt 6+" together
 const bindLast = s => s.replace(/ ([^ ]+)$/, '&nbsp;$1');
 
+// Every image ships as both .webp and .jpg — webp is roughly a third smaller.
+// items.js names the .jpg, so it stays readable; we ask for the .webp when the
+// browser can take it. Safari only learned webp in 14, and plenty of people
+// making music are on older machines, so an image that fails falls straight
+// back to the .jpg it was named after.
+const WEBP = (() => {
+  try {
+    const c = document.createElement('canvas');
+    return c.toDataURL('image/webp').lastIndexOf('data:image/webp', 0) === 0;
+  } catch (e) { return false; }
+})();
+
+function setImg(img, path) {
+  if (!img || !path) return;
+  img.dataset.fallback = path;
+  img.src = WEBP ? path.replace(/\.jpe?g$/i, '.webp') : path;
+}
+function imgFallback(img) {
+  const fb = img.dataset.fallback;
+  if (fb && img.src.indexOf(fb) === -1) { img.src = fb; return true; }
+  return false;
+}
+
 // ------------------------------------------------------------------ audio --
 // One <audio> element, re-pointed. No AudioContext, no decodeAudioData: a
 // 1 MB file decoded up front is a wait, streamed it starts almost at once.
@@ -170,8 +193,9 @@ function thingCard(it, i) {
       : `<div class="obj">`;
   const objEnd = it.page ? '</a>' : it.song ? '</button>' : '</div>';
 
-  // the first row is what people see first — everything below can wait
-  const eager = i < 3;
+  // the widest layout puts four across, so the first four are the first row —
+  // they load straight away and everything below waits until it's scrolled to
+  const eager = i < 4;
 
   a.innerHTML = `
     <div class="objwrap">
@@ -185,7 +209,6 @@ function thingCard(it, i) {
         <span class="hl">hear it</span>
       </button>` : ''}
     </div>
-    ${it.gui ? '<div class="panel" hidden><img alt="" decoding="async"></div>' : ''}
     <div class="meta">
       <h2 class="name">${esc(it.title)}</h2>
       ${it.song ? '<canvas class="wave" aria-hidden="true"></canvas>' : ''}
@@ -205,11 +228,11 @@ function thingCard(it, i) {
   const hear = $('.hear', a);
 
   img.onload  = () => { img.classList.add('in'); postHeight(); };
-  img.onerror = () => postHeight();
-  img.src = it.art;
+  img.onerror = () => { if (!imgFallback(img)) postHeight(); };
+  setImg(img, it.art);
 
   const card = { item: it, root: a, wave: $('.wave', a), hear, obj,
-                 wrap: $('.objwrap', a), gui: $('.gui', a), panel: $('.panel', a),
+                 wrap: $('.objwrap', a), gui: $('.gui', a),
                  peek: $('.peek', a), view: 0, swiped: false };
 
   if (it.song) {
@@ -242,38 +265,9 @@ const finePointer = () =>
 
 function loadGui(card) {
   const img = card.gui;
-  if (img && !img.src) img.src = card.item.gui;
-  const p = card.panel && card.panel.querySelector('img');
-  if (p && !p.src) p.src = card.item.gui;
-}
-
-// put the panel beside the tile, then pull it back inside the page if it would
-// hang off an edge — the tiles in the last column would otherwise be clipped
-function placePanel(card) {
-  const panel = card.panel;
-  panel.hidden = false;
-  const pad = 14;
-  const page = document.getElementById('page');
-  const pageBox = page.getBoundingClientRect();
-  const tile = card.wrap.getBoundingClientRect();
-  const w = panel.offsetWidth;
-  let left = tile.left + tile.width / 2 - w / 2;
-  left = Math.max(pageBox.left + pad, Math.min(left, pageBox.right - w - pad));
-  // .thing is the positioning parent
-  const host = card.root.getBoundingClientRect();
-  panel.style.left = Math.round(left - host.left) + 'px';
-  panel.style.top  = Math.round(tile.top - host.top) + 'px';
-}
-
-function showPanel(card, on) {
-  if (!card.panel) return;
-  if (on) {
-    loadGui(card);
-    placePanel(card);
-    requestAnimationFrame(() => card.panel.classList.add('in'));
-  } else {
-    card.panel.classList.remove('in');
-    card.panel.hidden = true;
+  if (img && !img.src) {
+    img.onerror = () => imgFallback(img);
+    setImg(img, card.item.gui);
   }
 }
 
@@ -293,18 +287,22 @@ function setView(card, v) {
 }
 
 function wireGui(card) {
-  // --- computer: hover opens the interface beside the tile
+  // --- computer: hovering the tile turns it into the interface
   let over = false;
   card.wrap.addEventListener('pointerenter', e => {
     if (e.pointerType === 'touch' || !finePointer()) return;
     over = true;
-    showPanel(card, true);
+    setView(card, 1);
   });
   card.wrap.addEventListener('pointerleave', () => {
     if (!over) return;
     over = false;
-    showPanel(card, false);
+    setView(card, 0);
   });
+  // fetch it as the pointer nears the card, so the swap has nothing to wait for
+  card.root.addEventListener('pointerenter', e => {
+    if (e.pointerType !== 'touch') loadGui(card);
+  }, { once: true });
 
   // --- phone: the arrow, and swiping the tile
   card.peek.addEventListener('click', e => {
