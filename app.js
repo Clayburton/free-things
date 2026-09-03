@@ -103,7 +103,11 @@ function tick() {
   if (env) v = env[Math.min(env.length - 1, Math.floor(progress() * env.length))] || 0;
   A.level += (v - A.level) * 0.14;
   drawWave(A.curId);
+  // the play button's ring fills as the demo plays (same control as /plugins/)
+  const pc = cards.get(A.curId);
+  if (pc && pc.hear) { const r = pc.hear.querySelector('.prog'); if (r) r.style.strokeDashoffset = (RING * (1 - progress())).toFixed(2); }
 }
+const RING = 125.66;
 
 // ---------------------------------------------------------------- shapes --
 const ENV = new Map();
@@ -199,14 +203,14 @@ function thingCard(it, i) {
 
   a.innerHTML = `
     <div class="objwrap">
-      ${objTag}<img class="art" alt="" decoding="async"${eager ? ' fetchpriority="high"' : ' loading="lazy"'}>${
+      ${objTag}<img class="art" alt="" ${eager ? 'decoding="sync" fetchpriority="high"' : 'decoding="async" loading="lazy"'}>${
         it.gui ? `<img class="gui" alt="" decoding="async">` : ''}${objEnd}
       ${it.gui ? `<button class="peek" type="button" aria-label="See what ${esc(it.title)} looks like">
         <svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2 1.5 10.5 10 2 18.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>
       </button>` : ''}
-      ${it.song ? `<button class="hear" type="button" aria-label="Hear ${esc(it.title)}">
-        <svg viewBox="0 0 16 18" aria-hidden="true"><path d="M1.2 1.1 15 9 1.2 16.9Z"/></svg>
-        <span class="hl">hear it</span>
+      ${it.song ? `<button class="hear" type="button" aria-label="Hear ${esc(it.title)}" aria-pressed="false">
+        <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="track" cx="22" cy="22" r="20"/><circle class="prog" cx="22" cy="22" r="20"/></svg>
+        <span class="ico" aria-hidden="true"></span><span class="hl">hear it</span>
       </button>` : ''}
     </div>
     <div class="meta">
@@ -338,8 +342,10 @@ function paintOne(c) {
   c.root.classList.toggle('is-playing', on);
   if (c.hear) {
     c.hear.hidden = !!c.item._bad;
+    c.hear.setAttribute('aria-pressed', on ? 'true' : 'false');
     const l = $('.hl', c.hear);
     if (l) l.textContent = busy ? 'loading' : on ? 'playing' : 'hear it';
+    if (!on) { const r = c.hear.querySelector('.prog'); if (r) r.style.strokeDashoffset = String(RING); }
   }
   if (c.obj && c.obj.tagName === 'BUTTON') c.obj.disabled = !!c.item._bad;
 }

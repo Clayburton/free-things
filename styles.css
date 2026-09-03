@@ -13,6 +13,7 @@
   --faint:#9a91a1;
   --pink:#cc5f97;
   --pink-deep:#b34a82;
+  --signal:#ffd707;
   --rule:rgba(43,35,51,.15);
 
   --pad: clamp(20px, 4vw, 56px);
@@ -62,9 +63,15 @@ body{
   max-width:1320px;margin:0 auto;
 }
 .mast-in{max-width:47ch}
-.kick{
-  margin:0;font-size:clamp(11px,1.15vw,13px);letter-spacing:.22em;
-  color:var(--pink-deep);
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;margin:0;
+  font-size:clamp(11px,1.15vw,12px);letter-spacing:.22em;text-transform:uppercase;color:#7d7285;
+  border:1px solid var(--rule);border-radius:999px;padding:7px 14px 7px 11px;background:rgba(255,253,249,.7);
+}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 3px rgba(255,215,7,.22)}
+.h1{
+  margin:.3em 0 0;font-family:var(--mono);font-weight:700;
+  font-size:clamp(46px,9vw,104px);line-height:.9;letter-spacing:-.02em;text-transform:lowercase;color:var(--ink);
 }
 .lede{
   margin:.85em 0 0;font-family:var(--serif);
@@ -199,22 +206,24 @@ body{
 
 /* hear it */
 .hear{
-  position:absolute;left:10px;bottom:10px;z-index:2;
-  display:flex;align-items:center;gap:.55em;
-  border:0;border-radius:2px;margin:0;padding:7px 11px 7px 10px;
-  background:rgba(252,249,244,.90);
-  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  box-shadow:0 1px 4px rgba(74,58,44,.20);
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;
-  color:var(--pink-deep);cursor:pointer;
-  opacity:0;transform:translateY(4px);
-  transition:opacity .24s ease, transform .24s ease;
+  position:absolute;left:12px;bottom:12px;z-index:2;
+  width:46px;height:46px;border-radius:50%;margin:0;padding:0;
+  border:1px solid var(--rule);background:rgba(252,249,244,.96);
+  display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 10px 22px -12px rgba(43,35,51,.5);
+  transition:transform .15s ease,border-color .2s ease;
   -webkit-tap-highlight-color:transparent;
 }
-.hear svg{width:9px;height:10px;fill:currentColor;flex:none}
-.thing:hover .hear,.thing:focus-within .hear,.thing.is-playing .hear{opacity:1;transform:none}
-.thing.is-playing .hear svg{opacity:.4}
-@media (hover:none){ .hear{opacity:1;transform:none} }
+.hear:hover{transform:scale(1.06);border-color:var(--pink)}
+.hear:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+.hear .ring{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);transform:rotate(-90deg);pointer-events:none}
+.hear .ring circle{fill:none;stroke-width:2.2}
+.hear .ring .track{stroke:transparent}
+.hear .ring .prog{stroke:var(--pink);stroke-linecap:round;stroke-dasharray:125.66;stroke-dashoffset:125.66;transition:stroke-dashoffset .25s linear}
+.hear .ico{width:0;height:0;border-style:solid;border-width:7px 0 7px 12px;border-color:transparent transparent transparent var(--ink);margin-left:3px}
+.thing.is-playing .hear{border-color:var(--pink)}
+.thing.is-playing .hear .ico{width:12px;height:14px;border:0;margin:0;background:linear-gradient(90deg,var(--ink) 0 4px,transparent 4px 8px,var(--ink) 8px 12px)}
+.hear .hl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* -------------------------------------------------------------- the copy */
 .meta{padding-top:clamp(15px,1.5vw,21px)}
@@ -242,15 +251,17 @@ body{
 
 .do{display:flex;flex-wrap:wrap;align-items:center;gap:.55em 1.15em;padding-top:1.15em}
 .take{
-  display:inline-flex;align-items:baseline;gap:.6em;text-decoration:none;
-  color:var(--ink);font-size:clamp(11.5px,1.1vw,13px);letter-spacing:.13em;
-  padding:.62em 1.05em;border:1px solid var(--rule);border-radius:2px;
-  background:rgba(255,253,249,.62);
-  transition:border-color .2s ease,color .2s ease,background .2s ease;
+  display:inline-flex;align-items:center;gap:.55em;text-decoration:none;
+  min-height:44px;padding:0 14px;background:var(--ink);color:var(--paper);
+  font-family:var(--mono);font-weight:700;font-size:clamp(11.5px,1.1vw,13px);letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid var(--ink);border-radius:0;box-shadow:5px 5px 0 var(--signal);white-space:nowrap;
+  transition:transform .12s ease,box-shadow .12s ease;
 }
-.take em{font-style:normal;font-size:.8em;letter-spacing:.1em;color:var(--faint)}
-.take:hover{border-color:var(--pink);color:var(--pink-deep);background:#fff}
-.take:hover em{color:var(--pink)}
+.take::before{content:"[";color:var(--signal)}
+.take::after{content:"]";color:var(--signal)}
+.take em{font-style:normal;font-size:.8em;letter-spacing:.1em;color:rgba(244,238,228,.72)}
+.take:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--signal);color:var(--paper)}
+.take:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px}
 
 .more{
   text-decoration:none;color:var(--muted);
