@@ -9,6 +9,10 @@
             Put it in assets/gui/. Hover the tile on a computer to see it;
             on a phone an arrow appears and you swipe. It is only fetched
             when someone asks for it, so it costs nothing on load.
+     cat    OPTIONAL. 'kontakt' or 'plugins' — each category becomes a
+            filter pill (with a count) above the table. Leave it out and
+            the page guesses: a VST3/AU spec line or a page of its own
+            means plugin, everything else is Kontakt.
      page   OPTIONAL. If present, clicking the picture opens that page.
             Leave it out and the picture becomes the play button instead —
             this page is the main page for the instruments, so only DEM-Osc

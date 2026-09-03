@@ -157,6 +157,7 @@ function build() {
     }
     sec.appendChild(thingCard(it, n++));
   });
+  buildFilter(items);
 
   table.appendChild(frag);
 }
@@ -253,6 +254,39 @@ function thingCard(it, i) {
 
   cards.set(it.id, card);
   return a;
+}
+
+// ------------------------------------------------------------ the browser --
+// One pill per category, with a count, built from what's on the table (the
+// same bar as /plugins/). An item says `cat:'kontakt'` or `cat:'plugins'`;
+// when it doesn't, the specs decide: a VST3/AU line or its own page = plugin.
+const CAT_LABELS = { kontakt: 'Kontakt', plugins: 'Plugins' };
+const CAT_ORDER  = ['kontakt', 'plugins'];
+const catOf = it => it.cat || ((it.page || /\bVST3\b|\bAU\b/.test((it.specs || []).join(' '))) ? 'plugins' : 'kontakt');
+
+function buildFilter(items) {
+  const wrap = document.querySelector('.filter .pills');
+  if (!wrap) return;
+  const things = items.filter(it => !it.divider);
+  const counts = {};
+  things.forEach(it => { const c = catOf(it); counts[c] = (counts[c] || 0) + 1; });
+  const cats = [...CAT_ORDER.filter(c => counts[c]), ...Object.keys(counts).filter(c => !CAT_ORDER.includes(c))];
+  const pills = [];
+  const mk = (cat, label, n) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pill'; b.dataset.cat = cat; b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = `${esc(label)} <span class="n">${n}</span>`;
+    b.addEventListener('click', () => apply(cat));
+    wrap.appendChild(b); pills.push(b);
+  };
+  mk('all', 'Everything', things.length);
+  cats.forEach(c => mk(c, CAT_LABELS[c] || c[0].toUpperCase() + c.slice(1), counts[c]));
+  const apply = cat => {
+    cards.forEach(c => { c.root.hidden = cat !== 'all' && catOf(c.item) !== cat; });
+    pills.forEach(p => p.setAttribute('aria-pressed', String(p.dataset.cat === cat)));
+    postHeight();                     // the iframe grows and shrinks with the filter
+  };
+  apply('all');
 }
 
 // -------------------------------------------------------------- the interface --
