@@ -157,9 +157,8 @@ function build() {
     }
     sec.appendChild(thingCard(it, n++));
   });
-  buildFilter(items);
-
   table.appendChild(frag);
+  buildFilter(items);          // after the table is on the page, so its first height post is real
 }
 
 // the empty place setting at the end of the table — the newsletter sign-up
@@ -462,6 +461,12 @@ function boot() {
   window.addEventListener('orientationchange', () => setTimeout(relayout, 240));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
   window.addEventListener('load', relayout);
+  // the WP iframe follows the page's real height: any layout change re-posts it
+  // (fonts arriving, images landing, a filter hiding tiles). The 8px guard in
+  // postHeight keeps this quiet.
+  if ('ResizeObserver' in window) new ResizeObserver(() => postHeight()).observe(document.documentElement);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(postHeight);
+  window.addEventListener('load', postHeight);
   // The interfaces download quietly once the page is up (about 60KB each), so
   // a hover shows one instantly instead of fetching it — the fade still plays.
   window.addEventListener('load', () => {
