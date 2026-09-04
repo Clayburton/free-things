@@ -462,6 +462,16 @@ function boot() {
   window.addEventListener('orientationchange', () => setTimeout(relayout, 240));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
   window.addEventListener('load', relayout);
+  // The interfaces download quietly once the page is up (about 60KB each), so
+  // a hover shows one instantly instead of fetching it — the fade still plays.
+  window.addEventListener('load', () => {
+    const warm = () => cards.forEach(c => {
+      if (!c.gui || c.gui.src) return;
+      c.gui.addEventListener('load', () => { if (c.gui.decode) c.gui.decode().catch(() => {}); }, { once: true });
+      loadGui(c);
+    });
+    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 2500 }); else setTimeout(warm, 1200);
+  });
   window.addEventListener('pageshow', relayout);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
 
