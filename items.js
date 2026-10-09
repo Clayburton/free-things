@@ -44,7 +44,7 @@ const ITEMS = [
     gui: 'assets/gui/dem-osc.jpg',
     page: 'https://clayandkelsy.com/dem-osc/',
     tint: '#dbdbdb',
-    story: 'She’s free. Now she just plays. Our demo oscillator, given away in full — no strings, no timer, nothing switched off.',
+    story: 'She’s free. Now she just plays. Our demo oscillator, yours to keep: no strings, no timer.',
     specs: ['VST3 · AU', 'mac & windows'],
     features: [
       'The whole plugin, free forever',
