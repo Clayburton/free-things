@@ -45,9 +45,9 @@ const ITEMS = [
     page: 'https://clayandkelsy.com/dem-osc/',
     tint: '#dbdbdb',
     story: 'She’s free. Now she just plays. Our demo oscillator is yours to keep: a direct download from us, no strings and no timer, with a few deeper effects waiting in the Osc Collection.',
-    specs: ['VST3 · AU', 'mac & windows'],
+    specs: ['VST3 · AU · mac', 'kontakt version: mac & windows'],
     features: [
-      'The whole plugin, free forever',
+      'Free to keep, no timer',
       'Runs in any DAW that takes VST3 or AU',
       'Grab it with an email at checkout so we can tell you about updates'
     ],
