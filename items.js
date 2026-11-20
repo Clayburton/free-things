@@ -79,9 +79,7 @@ const ITEMS = [
       'Three presets, and a [?] button that randomises everything'
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/gr808_CK.zip', size: '74 MB' },
-    links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/gr808-kick/' }
-    ]
+    links: []
   },
 
   {
@@ -102,9 +100,7 @@ const ITEMS = [
       'Three presets, and a [?] button that randomises everything'
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/aGong_CK.zip', size: '26 MB' },
-    links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/agong/' }
-    ]
+    links: []
   },
 
   {
@@ -125,9 +121,7 @@ const ITEMS = [
       'Three presets, and a [?] button that randomises everything'
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley_ebow_CK.zip', size: '100 MB' },
-    links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/diddley-ebow/' }
-    ]
+    links: []
   },
 
   {
@@ -148,9 +142,7 @@ const ITEMS = [
       'Three presets, and a [?] button that randomises everything'
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley_plucks_CK.zip', size: '225 MB' },
-    links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/diddley-plucks/' }
-    ]
+    links: []
   },
 
   {
@@ -173,9 +165,7 @@ const ITEMS = [
       'Bouncy FX, and three presets on each instrument'
     ],
     take: { kind: 'download', href: 'https://clayandkelsy.com/wp-content/uploads/2023/09/Wrenches_CK.zip', size: '342 MB' },
-    links: [
-      { label: 'on pianobook', href: 'https://www.pianobook.co.uk/packs/wrenches/' }
-    ]
+    links: []
   },
 
   /* The empty place setting at the end of the table. It's the newsletter
