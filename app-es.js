@@ -275,7 +275,7 @@ function buildFilter(items) {
     b.addEventListener('click', () => apply(cat));
     wrap.appendChild(b); pills.push(b);
   };
-  mk('all', 'Everything', things.length);
+  mk('all', 'Todo', things.length);
   cats.forEach(c => mk(c, CAT_LABELS[c] || c[0].toUpperCase() + c.slice(1), counts[c]));
   const apply = cat => {
     cards.forEach(c => { c.root.hidden = cat !== 'all' && catOf(c.item) !== cat; });

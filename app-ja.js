@@ -256,7 +256,7 @@ function thingCard(it, i) {
 // One pill per category, with a count, built from what's on the table (the
 // same bar as /plugins/). An item says `cat:'kontakt'` or `cat:'plugins'`;
 // when it doesn't, the specs decide: a VST3/AU line or its own page = plugin.
-const CAT_LABELS = { kontakt: 'Kontakt', plugins: 'Plugins' };
+const CAT_LABELS = { kontakt: 'Kontakt', plugins: 'プラグイン' };
 const CAT_ORDER  = ['kontakt', 'plugins'];
 const catOf = it => it.cat || ((it.page || /\bVST3\b|\bAU\b/.test((it.specs || []).join(' '))) ? 'plugins' : 'kontakt');
 
@@ -275,7 +275,7 @@ function buildFilter(items) {
     b.addEventListener('click', () => apply(cat));
     wrap.appendChild(b); pills.push(b);
   };
-  mk('all', 'Everything', things.length);
+  mk('all', 'すべて', things.length);
   cats.forEach(c => mk(c, CAT_LABELS[c] || c[0].toUpperCase() + c.slice(1), counts[c]));
   const apply = cat => {
     cards.forEach(c => { c.root.hidden = cat !== 'all' && catOf(c.item) !== cat; });
