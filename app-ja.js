@@ -1,0 +1,493 @@
+/* ==========================================================================
+   FREE THINGS — the table
+   Builds the page from items.js, streams each thing's demo when you click its
+   picture, and tells the host iframe how tall it is.
+
+   Nothing audio ships with this page. The demos stream straight from
+   clayandkelsy.com on click (preload="none", so the page costs nothing until
+   someone wants to hear something), and the shape drawn under each name comes
+   from waveforms.js — about 200 bytes per song.
+
+   Debug: window.__free
+   ========================================================================== */
+(() => {
+'use strict';
+
+const $  = (s, r) => (r || document).querySelector(s);
+const el = id => document.getElementById(id);
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// tie the last word on so a wrap can't strand it — keeps "Kontakt 6+" together
+const bindLast = s => s.replace(/ ([^ ]+)$/, '&nbsp;$1');
+
+// Every image ships as both .webp and .jpg — webp is roughly a third smaller.
+// items.js names the .jpg, so it stays readable; we ask for the .webp when the
+// browser can take it. Safari only learned webp in 14, and plenty of people
+// making music are on older machines, so an image that fails falls straight
+// back to the .jpg it was named after.
+const WEBP = (() => {
+  try {
+    const c = document.createElement('canvas');
+    return c.toDataURL('image/webp').lastIndexOf('data:image/webp', 0) === 0;
+  } catch (e) { return false; }
+})();
+
+function setImg(img, path) {
+  if (!img || !path) return;
+  img.dataset.fallback = path;
+  img.src = WEBP ? path.replace(/\.jpe?g$/i, '.webp') : path;
+}
+function imgFallback(img) {
+  const fb = img.dataset.fallback;
+  if (fb && img.src.indexOf(fb) === -1) { img.src = fb; return true; }
+  return false;
+}
+
+// ------------------------------------------------------------------ audio --
+// One <audio> element, re-pointed. No AudioContext, no decodeAudioData: a
+// 1 MB file decoded up front is a wait, streamed it starts almost at once.
+const A = { el: null, curId: null, level: 0, raf: 0, loading: false };
+
+function player() {
+  if (A.el) return A.el;
+  const a = new Audio();
+  a.preload = 'none';
+  a.addEventListener('playing', () => { A.loading = false; paintAll(); });
+  a.addEventListener('ended',   () => stop());
+  a.addEventListener('error',   () => {
+    // a demo that won't load shouldn't leave a button that lies
+    const c = cards.get(A.curId);
+    if (c) { c.item._bad = true; paintOne(c); }
+    stop();
+  });
+  A.el = a;
+  return a;
+}
+
+function play(item) {
+  if (A.curId === item.id) { stop(); return; }
+  stop();
+  const a = player();
+  A.curId = item.id;
+  A.loading = true;
+  A.level = 0;
+  a.src = item.song;
+  const p = a.play();
+  if (p && p.catch) p.catch(() => { A.curId = null; A.loading = false; paintAll(); });
+  paintAll();
+  if (!A.raf) tick();
+}
+
+function stop() {
+  const was = A.curId;
+  if (A.el) { try { A.el.pause(); } catch (e) {} }
+  A.curId = null; A.loading = false; A.level = 0;
+  if (A.raf) { cancelAnimationFrame(A.raf); A.raf = 0; }
+  if (was) { paintAll(); drawWave(was); }
+}
+
+const progress = () => {
+  const a = A.el;
+  return (a && a.duration) ? Math.min(1, a.currentTime / a.duration) : 0;
+};
+
+function tick() {
+  A.raf = requestAnimationFrame(tick);
+  if (!A.curId) { cancelAnimationFrame(A.raf); A.raf = 0; return; }
+  // the bead breathes with the song's own shape at the playhead — no analyser
+  // needed, and it works identically however the audio is served
+  const env = envOf(A.curId);
+  let v = 0;
+  if (env) v = env[Math.min(env.length - 1, Math.floor(progress() * env.length))] || 0;
+  A.level += (v - A.level) * 0.14;
+  drawWave(A.curId);
+  // the play button's ring fills as the demo plays (same control as /plugins/)
+  const pc = cards.get(A.curId);
+  if (pc && pc.hear) { const r = pc.hear.querySelector('.prog'); if (r) r.style.strokeDashoffset = (RING * (1 - progress())).toFixed(2); }
+}
+const RING = 125.66;
+
+// ---------------------------------------------------------------- shapes --
+const ENV = new Map();
+function envOf(id) {
+  if (ENV.has(id)) return ENV.get(id);
+  const b64 = (window.WAVES || {})[id];
+  if (!b64) { ENV.set(id, null); return null; }
+  let out = null;
+  try {
+    const bin = atob(b64);
+    out = new Float32Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i) / 255;
+  } catch (e) { out = null; }
+  ENV.set(id, out);
+  return out;
+}
+
+// ------------------------------------------------------------------ build --
+const cards = new Map();
+let DPR = 1;
+
+function build() {
+  const table = el('table');
+  const items = window.ITEMS || [];
+  let sec = null;
+  const frag = document.createDocumentFragment();
+
+  const newSection = label => {
+    sec = document.createElement('div');
+    sec.className = 'section';
+    if (label) {
+      const h = document.createElement('div');
+      h.className = 'sec-head';
+      h.innerHTML = `<span>${esc(label)}</span>`;
+      sec.appendChild(h);
+    }
+    frag.appendChild(sec);
+  };
+  newSection(null);
+
+  let n = 0;
+  items.forEach(it => {
+    if (it.divider) {
+      if (it.end) { sec.appendChild(soonCard(it)); return; }
+      newSection(it.divider);
+      return;
+    }
+    sec.appendChild(thingCard(it, n++));
+  });
+  table.appendChild(frag);
+  buildFilter(items);          // after the table is on the page, so its first height post is real
+}
+
+// the empty place setting at the end of the table — the newsletter sign-up
+function soonCard(it) {
+  const a = document.createElement('article');
+  a.className = 'thing thing--soon';
+  const label = esc(it.label || it.divider || '近日追加');
+  const slot = it.href
+    ? `<a class="slot" href="${esc(it.href)}" target="_top" rel="noopener"><span>${label}</span></a>`
+    : `<div class="slot"><span>${label}</span></div>`;
+  a.innerHTML = `${slot}
+     <div class="meta"><p class="story">${esc(window.END_NOTE || '')}</p></div>`;
+  return a;
+}
+
+function thingCard(it, i) {
+  const a = document.createElement('article');
+  a.className = 'thing';
+  // hand-placed, not gridded — a fixed nudge per position, never random
+  a.style.setProperty('--rot', (((i * 37) % 7) - 3) * 0.16 + 'deg');
+  a.style.setProperty('--tint', it.tint || '#ece5da');
+
+  const take = it.take || {};
+  const dl   = take.kind === 'download';
+  const meta = dl ? (take.size ? '· ' + take.size : '· 無料') : '· 無料';
+
+  // This page is the main page for the instruments, so the picture only leads
+  // away when the item actually has somewhere to go (DEM-Osc's free checkout).
+  // Otherwise the picture IS the play control — a big, obvious target.
+  // Either way the chip rides on top as a sibling; a button inside an anchor
+  // would be invalid HTML.
+  const objTag = it.page
+    ? `<a class="obj" href="${esc(it.page)}" target="_top" aria-label="${esc(it.title)} — read more">`
+    : it.song
+      ? `<button class="obj" type="button" aria-label="Hear ${esc(it.title)}">`
+      : `<div class="obj">`;
+  const objEnd = it.page ? '</a>' : it.song ? '</button>' : '</div>';
+
+  // the widest layout puts four across, so the first four are the first row —
+  // they load straight away and everything below waits until it's scrolled to
+  const eager = i < 4;
+
+  a.innerHTML = `
+    <div class="objwrap">
+      ${objTag}<img class="art" alt="" ${eager ? 'decoding="sync" fetchpriority="high"' : 'decoding="async" loading="lazy"'}>${
+        it.gui ? `<img class="gui" alt="" decoding="async">` : ''}${objEnd}
+      ${it.gui ? `<button class="peek" type="button" aria-label="See what ${esc(it.title)} looks like">
+        <svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2 1.5 10.5 10 2 18.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>
+      </button>` : ''}
+      ${it.song ? `<button class="hear" type="button" aria-label="Hear ${esc(it.title)}" aria-pressed="false"> <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="track" cx="22" cy="22" r="20"/><circle class="prog" cx="22" cy="22" r="20"/></svg> <span class="ico" aria-hidden="true"></span><span class="hl">聴く</span> </button>` : ''}
+    </div>
+    <div class="meta">
+      <h2 class="name">${esc(it.title)}</h2>
+      ${it.song ? '<canvas class="wave" aria-hidden="true"></canvas>' : ''}
+      <p class="story">${esc(it.story)}</p>
+      <p class="specs">${(it.specs || []).map(s =>
+        `<span${s.length < 20 ? ' class="nb"' : ''}>${bindLast(esc(s))}</span>`).join('<i>·</i>')}</p>
+      <p class="do">
+        <a class="take" href="${esc(take.href || '#')}"${dl ? ' download' : ' target="_top"'}>
+          ${esc(take.label || 'もらう')} <em>${meta}</em></a>
+        ${(it.links || []).map(l =>
+          `<a class="more" href="${esc(l.href)}" target="_top" rel="noopener">${esc(l.label)}</a>`).join('')}
+      </p>
+    </div>`;
+
+  const obj  = $('.obj', a);
+  const img  = $('img.art', a);
+  const hear = $('.hear', a);
+
+  img.onload  = () => { img.classList.add('in'); postHeight(); };
+  img.onerror = () => { if (!imgFallback(img)) postHeight(); };
+  setImg(img, it.art);
+
+  const card = { item: it, root: a, wave: $('.wave', a), hear, obj,
+                 wrap: $('.objwrap', a), gui: $('.gui', a),
+                 peek: $('.peek', a), view: 0, swiped: false };
+
+  if (it.song) {
+    const toggle = e => {
+      e.preventDefault(); e.stopPropagation();
+      if (card.swiped) { card.swiped = false; return; }   // a swipe is not a tap
+      if (!it._bad) play(it);
+    };
+    hear.addEventListener('click', toggle);
+    obj.addEventListener('click', toggle);
+  }
+
+  if (it.gui) wireGui(card);
+
+  cards.set(it.id, card);
+  return a;
+}
+
+// ------------------------------------------------------------ the browser --
+// One pill per category, with a count, built from what's on the table (the
+// same bar as /plugins/). An item says `cat:'kontakt'` or `cat:'plugins'`;
+// when it doesn't, the specs decide: a VST3/AU line or its own page = plugin.
+const CAT_LABELS = { kontakt: 'Kontakt', plugins: 'Plugins' };
+const CAT_ORDER  = ['kontakt', 'plugins'];
+const catOf = it => it.cat || ((it.page || /\bVST3\b|\bAU\b/.test((it.specs || []).join(' '))) ? 'plugins' : 'kontakt');
+
+function buildFilter(items) {
+  const wrap = document.querySelector('.filter .pills');
+  if (!wrap) return;
+  const things = items.filter(it => !it.divider);
+  const counts = {};
+  things.forEach(it => { const c = catOf(it); counts[c] = (counts[c] || 0) + 1; });
+  const cats = [...CAT_ORDER.filter(c => counts[c]), ...Object.keys(counts).filter(c => !CAT_ORDER.includes(c))];
+  const pills = [];
+  const mk = (cat, label, n) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pill'; b.dataset.cat = cat; b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = `${esc(label)} <span class="n">${n}</span>`;
+    b.addEventListener('click', () => apply(cat));
+    wrap.appendChild(b); pills.push(b);
+  };
+  mk('all', 'Everything', things.length);
+  cats.forEach(c => mk(c, CAT_LABELS[c] || c[0].toUpperCase() + c.slice(1), counts[c]));
+  const apply = cat => {
+    cards.forEach(c => { c.root.hidden = cat !== 'all' && catOf(c.item) !== cat; });
+    pills.forEach(p => p.setAttribute('aria-pressed', String(p.dataset.cat === cat)));
+    postHeight();                     // the iframe grows and shrinks with the filter
+  };
+  apply('all');
+}
+
+// -------------------------------------------------------------- the interface --
+// Each thing has a second image: what the instrument actually looks like. It is
+// never fetched until someone asks for it, so it costs nothing on load.
+//
+// On a computer you hover the tile and the interface opens beside it, wider
+// than the tile, because these are landscape screenshots and squeezing one into
+// a square makes it too small to read.
+// On a phone there is no hover, so an arrow appears on the tile: tap it, or
+// swipe the tile sideways, and the interface takes the tile's place.
+const finePointer = () =>
+  window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+function loadGui(card) {
+  const img = card.gui;
+  if (img && !img.src) {
+    img.onerror = () => imgFallback(img);
+    setImg(img, card.item.gui);
+  }
+}
+
+function setView(card, v) {
+  card.view = v;
+  if (v) loadGui(card);
+  card.root.classList.toggle('shows-gui', !!v);
+  if (card.peek) {
+    card.peek.classList.toggle('back', !!v);
+    card.peek.setAttribute('aria-label', v
+      ? `${card.item.title} に戻る`
+      : `${card.item.title} の見た目を見る`);
+  }
+  // on a phone the tile grows to full width for the interface, so the page
+  // gets taller and the host iframe has to follow
+  setTimeout(postHeight, 340);
+}
+
+function wireGui(card) {
+  // --- computer: hovering the tile turns it into the interface
+  let over = false;
+  card.wrap.addEventListener('pointerenter', e => {
+    if (e.pointerType === 'touch' || !finePointer()) return;
+    over = true;
+    setView(card, 1);
+  });
+  card.wrap.addEventListener('pointerleave', () => {
+    if (!over) return;
+    over = false;
+    setView(card, 0);
+  });
+  // fetch it as the pointer nears the card, so the swap has nothing to wait for
+  card.root.addEventListener('pointerenter', e => {
+    if (e.pointerType !== 'touch') loadGui(card);
+  }, { once: true });
+
+  // --- phone: the arrow, and swiping the tile
+  card.peek.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    setView(card, card.view ? 0 : 1);
+  });
+
+  let x0 = 0, y0 = 0, tracking = false;
+  card.wrap.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') return;
+    tracking = true; x0 = e.clientX; y0 = e.clientY; card.swiped = false;
+  });
+  card.wrap.addEventListener('pointermove', e => {
+    if (!tracking) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    // only claim the gesture once it is clearly sideways, so the page can
+    // still be scrolled with a finger that starts on a tile
+    if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      tracking = false;
+      card.swiped = true;
+      setView(card, dx < 0 ? 1 : 0);
+    }
+  });
+  const done = () => { tracking = false; };
+  card.wrap.addEventListener('pointerup', done);
+  card.wrap.addEventListener('pointercancel', () => { tracking = false; card.swiped = false; });
+}
+
+// ------------------------------------------------------------------ paint --
+function paintOne(c) {
+  const on   = A.curId === c.item.id;
+  const busy = on && A.loading;
+  c.root.classList.toggle('is-playing', on);
+  if (c.hear) {
+    c.hear.hidden = !!c.item._bad;
+    c.hear.setAttribute('aria-pressed', on ? 'true' : 'false');
+    const l = $('.hl', c.hear);
+    if (l) l.textContent = busy ? 'loading' : on ? 'playing' : '聴く';
+    if (!on) { const r = c.hear.querySelector('.prog'); if (r) r.style.strokeDashoffset = String(RING); }
+  }
+  if (c.obj && c.obj.tagName === 'BUTTON') c.obj.disabled = !!c.item._bad;
+}
+
+function paintAll() {
+  cards.forEach(paintOne);
+  const b = el('soundBtn');
+  b.hidden = !A.curId;                       // it's a stop button, so only while playing
+  b.setAttribute('aria-pressed', A.curId ? 'true' : 'false');
+}
+
+function sizeWave(c) {
+  if (!c.wave) return;
+  const w = c.wave.clientWidth, h = c.wave.clientHeight;
+  if (!w || !h) return;
+  c.wave.width  = Math.round(w * DPR);
+  c.wave.height = Math.round(h * DPR);
+  drawWave(c.item.id);
+}
+
+function drawWave(id) {
+  const c = cards.get(id);
+  if (!c || !c.wave || !c.wave.width) return;
+  const x = c.wave.getContext('2d');
+  const w = c.wave.width, h = c.wave.height, mid = h / 2;
+  x.clearRect(0, 0, w, h);
+
+  x.strokeStyle = 'rgba(43,35,51,.16)';
+  x.lineWidth = Math.max(1, DPR);
+  x.beginPath(); x.moveTo(0, mid); x.lineTo(w, mid); x.stroke();
+
+  const env = envOf(id);
+  if (!env) return;
+
+  const playing = A.curId === id;
+  const inkX = playing ? progress() * w : 0;
+  const amp = h * 0.40 * (playing ? (0.82 + 0.30 * A.level) : 0.66);
+  const bar = w / env.length;
+  for (let i = 0; i < env.length; i++) {
+    const bx = i * bar, a = env[i] * amp;
+    x.fillStyle = bx < inkX ? 'rgba(204,95,151,.92)' : 'rgba(43,35,51,.20)';
+    x.fillRect(bx, mid - a, Math.max(1, bar * 0.6), a * 2);
+  }
+  if (playing && inkX > 0) {
+    x.fillStyle = 'rgba(179,74,130,1)';
+    const r = Math.max(1.6, DPR * 1.5) * (1 + A.level * 0.5);
+    x.beginPath(); x.arc(inkX, mid, r, 0, 6.2832); x.fill();
+  }
+}
+
+// ----------------------------------------------------------------- height --
+let lastH = 0;
+function postHeight() {
+  const h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+  if (!h || Math.abs(h - lastH) < 8) return;      // a real delta, or nothing
+  lastH = h;
+  try { parent.postMessage({ ckFree: 'height', h }, '*'); } catch (e) {}
+}
+
+// ------------------------------------------------------------------- wire --
+function boot() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  build();
+  paintAll();
+
+  el('soundBtn').addEventListener('click', stop);
+
+  const relayout = () => {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    cards.forEach(sizeWave);
+    postHeight();
+  };
+
+  if (window.ResizeObserver) {
+    let t = 0;
+    new ResizeObserver(() => { clearTimeout(t); t = setTimeout(relayout, 90); })
+      .observe(document.documentElement);
+  }
+  window.addEventListener('resize', () => { clearTimeout(boot._t); boot._t = setTimeout(relayout, 120); });
+  window.addEventListener('orientationchange', () => setTimeout(relayout, 240));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+  window.addEventListener('load', relayout);
+  // the WP iframe follows the page's real height: any layout change re-posts it
+  // (fonts arriving, images landing, a filter hiding tiles). The 8px guard in
+  // postHeight keeps this quiet.
+  if ('ResizeObserver' in window) new ResizeObserver(() => postHeight()).observe(document.documentElement);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(postHeight);
+  window.addEventListener('load', postHeight);
+  // The interfaces download quietly once the page is up (about 60KB each), so
+  // a hover shows one instantly instead of fetching it — the fade still plays.
+  window.addEventListener('load', () => {
+    const warm = () => cards.forEach(c => {
+      if (!c.gui || c.gui.src) return;
+      c.gui.addEventListener('load', () => { if (c.gui.decode) c.gui.decode().catch(() => {}); }, { once: true });
+      loadGui(c);
+    });
+    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 2500 }); else setTimeout(warm, 1200);
+  });
+  window.addEventListener('pageshow', relayout);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+
+  relayout();
+  setTimeout(postHeight, 400);
+  setTimeout(postHeight, 1400);
+}
+
+window.__free = {
+  A, cards, play, stop, postHeight, drawWave, envOf,
+  get height() { return lastH; }
+};
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+})();
