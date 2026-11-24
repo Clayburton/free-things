@@ -44,12 +44,12 @@ const ITEMS = [
     gui: 'assets/gui/dem-osc.jpg',
     page: 'https://clayandkelsy.com/dem-osc/',
     tint: '#dbdbdb',
-    story: '彼女は無料。あとは弾くだけ。私たちのデモ・オシレーターはずっとあなたのものです。私たちから直接ダウンロードでき、条件もタイマーもありません。もっと奥深いエフェクトは Osc Collection で待っています。',
+    story: '無料になりました。あとは弾くだけ。私たちのデモ・オシレーターはずっとあなたのものです。私たちから直接ダウンロードでき、条件も期限もありません。もっと奥深いエフェクトは Osc Collection で待っています。',
     specs: ['VST3 · AU · Mac', 'Kontakt 版：Mac と Windows'],
     features: [
-      'ずっと無料、タイマーなし',
+      'ずっと無料、期限なし',
       'VST3 または AU に対応したどの DAW でも動きます',
-      'チェックアウトでメールアドレスを入れて入手してください。アップデートをお知らせします'
+      '購入手続きでメールアドレスを入力して入手してください。アップデートをお知らせします'
     ],
     take: { kind: 'page', href: 'https://clayandkelsy.com/dem-osc/', label: 'DEM-Osc を入手' },
     links: [
@@ -132,7 +132,7 @@ const ITEMS = [
     gui: 'assets/gui/diddley-plucks.jpg',
     tint: '#eff3ff',
     song: 'https://clayandkelsy.com/wp-content/uploads/2023/07/Diddley-Plucks.mp3',
-    story: '同じシガーボックス・ギターを、今度はスライドではじいて。かわいくてフォークな、Ebow 版の人なつっこいきょうだいです。',
+    story: '同じシガーボックス・ギターを、今度はスライドではじいて。かわいらしくフォーキーな、Ebow 版の人なつっこいきょうだいです。',
     specs: ['Kontakt 6 以降の製品版が必要です', '331.2 MB installed'],
     features: [
       '一弦のディドリー・ボウを BAE 1073 MPF に直接',
