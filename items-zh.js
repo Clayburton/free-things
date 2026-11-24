@@ -44,7 +44,7 @@ const ITEMS = [
     gui: 'assets/gui/dem-osc.jpg',
     page: 'https://clayandkelsy.com/dem-osc/',
     tint: '#dbdbdb',
-    story: '她是免费的，你只管弹。我们的演示振荡器永久归你：直接从我们这里下载，没有附加条件，也没有时间限制，还有几款更深入的效果在 Osc Collection 里等着你。',
+    story: '它免费了，你只管弹。我们的演示振荡器永久归你：直接从我们这里下载，毫无套路，也没有时间限制，还有几款更深入的效果在 Osc Collection 里等着你。',
     specs: ['VST3 · AU · Mac', 'Kontakt 版：Mac 和 Windows'],
     features: [
       '永久免费，没有时间限制',
